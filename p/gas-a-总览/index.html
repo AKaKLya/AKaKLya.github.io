@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="起手式 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine ↑首先看一遍官方文档↑ GAS A系列是由 &lt;Unreal Engine 5 - Gameplay Ability System - Top Down RPG&gt; 这一套教程来的https://www.bilibili.com/video/BV1JD421E7yCGAS B系列是我做的另一个工程，尽量使用像MVVM这种新的特性去做，融合一些Lyra中的方法，以及Lyra中的好玩的东西，或者是魔改一些引擎的东西. (虽然A系列的RPG也参考了Lyra) 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。 此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 启用Gameplay技能系统并创建包含技能系统组件的Actor后，便可创建技能并决定Actor的响应方式。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写什么难懂的概念 只会让脑子开局就过载，好的作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能&mdash;&gt;技能不可用&mdash;&gt;等待冷却&mdash;&gt;技能可用，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
+<title>GAS A - 总览</title>
+
+<link rel='canonical' href='http://localhost:1313/p/gas-a-%E6%80%BB%E8%A7%88/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - 总览">
+<meta property='og:description' content="起手式 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine ↑首先看一遍官方文档↑ GAS A系列是由 &lt;Unreal Engine 5 - Gameplay Ability System - Top Down RPG&gt; 这一套教程来的https://www.bilibili.com/video/BV1JD421E7yCGAS B系列是我做的另一个工程，尽量使用像MVVM这种新的特性去做，融合一些Lyra中的方法，以及Lyra中的好玩的东西，或者是魔改一些引擎的东西. (虽然A系列的RPG也参考了Lyra) 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。 此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 启用Gameplay技能系统并创建包含技能系统组件的Actor后，便可创建技能并决定Actor的响应方式。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写什么难懂的概念 只会让脑子开局就过载，好的作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能&mdash;&gt;技能不可用&mdash;&gt;等待冷却&mdash;&gt;技能可用，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
+<meta property='og:url' content='http://localhost:1313/p/gas-a-%E6%80%BB%E8%A7%88/'>
+<meta property='og:site_name' content='AKaKLya'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-10T11:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-10T11:59:56&#43;08:00'/>
+<meta name="twitter:title" content="GAS A - 总览">
+<meta name="twitter:description" content="起手式 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine ↑首先看一遍官方文档↑ GAS A系列是由 &lt;Unreal Engine 5 - Gameplay Ability System - Top Down RPG&gt; 这一套教程来的https://www.bilibili.com/video/BV1JD421E7yCGAS B系列是我做的另一个工程，尽量使用像MVVM这种新的特性去做，融合一些Lyra中的方法，以及Lyra中的好玩的东西，或者是魔改一些引擎的东西. (虽然A系列的RPG也参考了Lyra) 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。 此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 启用Gameplay技能系统并创建包含技能系统组件的Actor后，便可创建技能并决定Actor的响应方式。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写什么难懂的概念 只会让脑子开局就过载，好的作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能&mdash;&gt;技能不可用&mdash;&gt;等待冷却&mdash;&gt;技能可用，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/d_hu15622052934649275245.jpg" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🍥</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">AKaKLya</a></h1>
+            <h2 class="site-description">点击</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#起手式">起手式</a></li>
+    <li><a href="#技能执行流程">技能执行流程</a>
+      <ol>
+        <li><a href="#冷却时间">冷却时间</a></li>
+        <li><a href="#技能耗费">技能耗费</a></li>
+        <li><a href="#技能伤害">技能伤害</a></li>
+        <li><a href="#技能蓝图">技能蓝图</a></li>
+        <li><a href="#被动技能">被动技能</a></li>
+      </ol>
+    </li>
+    <li><a href="#abilitysystemcomponent">AbilitySystemComponent</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/gas-a-%E6%80%BB%E8%A7%88/">GAS A - 总览</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 10, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="起手式">起手式
+</h2><p><a class="link" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine"  target="_blank" rel="noopener"
+    >https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine</a></p>
+<p>↑首先看一遍官方文档↑</p>
+<p>GAS A系列是由 &lt;Unreal Engine 5 - Gameplay Ability System - Top Down RPG&gt; 这一套教程来的<br/><a class="link" href="https://www.bilibili.com/video/BV1JD421E7yC"  target="_blank" rel="noopener"
+    >https://www.bilibili.com/video/BV1JD421E7yC</a><br/>GAS B系列是我做的另一个工程，尽量使用像MVVM这种新的特性去做，融合一些Lyra中的方法，以及Lyra中的好玩的东西，或者是魔改一些引擎的东西.   (虽然A系列的RPG也参考了Lyra)</p>
+<p>与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。
+此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。
+启用Gameplay技能系统并创建包含技能系统组件的Actor后，便可创建技能并决定Actor的响应方式。</p>
+<p>角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，<br/>例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.</p>
+<p><img src="/p/gas-a-%E6%80%BB%E8%A7%88/Attribute.png"
+	width="568"
+	height="104"
+	srcset="/p/gas-a-%E6%80%BB%E8%A7%88/Attribute_hu3928359938825299283.png 480w, /p/gas-a-%E6%80%BB%E8%A7%88/Attribute_hu2050239321088977538.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="546"
+		data-flex-basis="1310px"
+	
+></p>
+<p>GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都是GameplayAbility.<br/>技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义.  CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可.</p>
+<h2 id="技能执行流程">技能执行流程
+</h2><p>先描述最感兴趣的一集吧，开局就写什么难懂的概念 只会让脑子开局就过载，好的作文首先要引起读者的兴趣。<br/> 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。</p>
+<h3 id="冷却时间">冷却时间
+</h3><p>泽拉斯的Q技能一级有9秒CD，释放技能&mdash;&gt;技能不可用&mdash;&gt;等待冷却&mdash;&gt;技能可用，这个流程如何使用GAS来执行？<br/>GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。<br/>假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。<br/>执行流程为:<br/>GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CD<br/>GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束</p>
+<h3 id="技能耗费">技能耗费
+</h3><p>泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.<br/>GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)<br/>Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行.</p>
+<p>执行流程与 冷却时间 相似.</p>
+<h3 id="技能伤害">技能伤害
+</h3><p>有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？<br/>NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.</p>
+<p>假如我发射一个火球，那么在火球滑行的途中呢，它撞到了地面 触发爆炸伤害. 这里就得范围检测Enemy，并且获得它们身上的 AbilitySystemComponent 并且对这个组件应用GE，造成伤害</p>
+<center class="half">
+    <img src="Fire_1.png" width="300"/>
+    <img src="Fire_2.png" width="300"/>
+</center>
+<h3 id="技能蓝图">技能蓝图
+</h3><p><img src="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_GA.png"
+	width="1918"
+	height="1004"
+	srcset="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_GA_hu16880287695330780528.png 480w, /p/gas-a-%E6%80%BB%E8%A7%88/Ex_GA_hu17992905784926449050.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="191"
+		data-flex-basis="458px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_Cost.png"
+	width="1401"
+	height="768"
+	srcset="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_Cost_hu6320484936386894104.png 480w, /p/gas-a-%E6%80%BB%E8%A7%88/Ex_Cost_hu5531946174740946488.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="182"
+		data-flex-basis="437px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_CD.png"
+	width="1392"
+	height="854"
+	srcset="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_CD_hu1652265004360397916.png 480w, /p/gas-a-%E6%80%BB%E8%A7%88/Ex_CD_hu14135260687976926037.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="162"
+		data-flex-basis="391px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_DamageBP.png"
+	width="1902"
+	height="890"
+	srcset="/p/gas-a-%E6%80%BB%E8%A7%88/Ex_DamageBP_hu16319842459776224202.png 480w, /p/gas-a-%E6%80%BB%E8%A7%88/Ex_DamageBP_hu16533264077760887101.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="213"
+		data-flex-basis="512px"
+	
+></p>
+<h3 id="被动技能">被动技能
+</h3><p>生命回复、法力回复 这些都是自动运行的， 每秒回复1点生命值 回复1点魔法值， 可以用GE做一个 无限时间 的效果，持续一段时间 | 无限时间 ， 这两个策略都可以设置触发周期，比如每1秒触发一次，每0.5秒触发一次 等等。</p>
+<p>自动回复就使用 无限时间 ，每秒触发一次，每次触发添加1点生命值，1点魔法值。<br/>就叫它 GE_Regeneration ，在BeginPlay时 对AbilitySystemComponent应用这个GE即可。<br/>那死亡时 不想要自动回复了怎么办？ GE可以被Apply，也可以被Remove，死亡时只要移除这个GE就行了,</p>
+<p>又得到一个概念： GE可以脱离GA 单独使用，可以应用一个GE 这个GE也可以被Remove.</p>
+<p><img src="/p/gas-a-%E6%80%BB%E8%A7%88/Doc_RemoveGE.png"
+	width="1884"
+	height="948"
+	srcset="/p/gas-a-%E6%80%BB%E8%A7%88/Doc_RemoveGE_hu15580065686303143287.png 480w, /p/gas-a-%E6%80%BB%E8%A7%88/Doc_RemoveGE_hu15659388379746501430.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="198"
+		data-flex-basis="476px"
+	
+></p>
+<h2 id="abilitysystemcomponent">AbilitySystemComponent
+</h2>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            国窖1573 - 
+        
+        2025 AKaKLya
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.29.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0f4e44504cf40ab34cf124bb8fa71a5615b897b6d3841a1d2857b604319620c7.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
