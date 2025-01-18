@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="起手式 网页图片模糊 点击图片预览高清大图 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine↑首先看一遍官方文档↑ GAS学习资料:https://github.com/BillEliot/GASDocumentation_Chinese 官方的ActionRPG项目， GAS A系列是由 &lt; Gameplay Ability System - Top Down RPG&gt; 这一套教程来的,简单的细枝末节不记录https://www.bilibili.com/video/BV1JD421E7yC 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.尽管AttributeSet提供了Setter方法，也不该手动调用它去做一些事情. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都可以是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写难懂的东西 只会让脑子开局就过载，作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能时 如果在冷却中 就不让释放，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
+<title>GAS A - 技能系统总览</title>
+
+<link rel='canonical' href='https://akaklya.github.io/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - 技能系统总览">
+<meta property='og:description' content="起手式 网页图片模糊 点击图片预览高清大图 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine↑首先看一遍官方文档↑ GAS学习资料:https://github.com/BillEliot/GASDocumentation_Chinese 官方的ActionRPG项目， GAS A系列是由 &lt; Gameplay Ability System - Top Down RPG&gt; 这一套教程来的,简单的细枝末节不记录https://www.bilibili.com/video/BV1JD421E7yC 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.尽管AttributeSet提供了Setter方法，也不该手动调用它去做一些事情. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都可以是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写难懂的东西 只会让脑子开局就过载，作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能时 如果在冷却中 就不让释放，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
+<meta property='og:url' content='https://akaklya.github.io/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/'>
+<meta property='og:site_name' content='AKaKLya'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-10T11:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-10T11:59:56&#43;08:00'/>
+<meta name="twitter:title" content="GAS A - 技能系统总览">
+<meta name="twitter:description" content="起手式 网页图片模糊 点击图片预览高清大图 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine↑首先看一遍官方文档↑ GAS学习资料:https://github.com/BillEliot/GASDocumentation_Chinese 官方的ActionRPG项目， GAS A系列是由 &lt; Gameplay Ability System - Top Down RPG&gt; 这一套教程来的,简单的细枝末节不记录https://www.bilibili.com/video/BV1JD421E7yC 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.尽管AttributeSet提供了Setter方法，也不该手动调用它去做一些事情. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都可以是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写难懂的东西 只会让脑子开局就过载，作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能时 如果在冷却中 就不让释放，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/d_hu15622052934649275245.jpg" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🍥</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">AKaKLya</a></h1>
+            <h2 class="site-description">点击</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#起手式">起手式</a></li>
+    <li><a href="#技能执行流程">技能执行流程</a>
+      <ol>
+        <li><a href="#冷却时间">冷却时间</a></li>
+        <li><a href="#技能耗费">技能耗费</a></li>
+        <li><a href="#技能伤害">技能伤害</a></li>
+        <li><a href="#技能蓝图">技能蓝图</a></li>
+        <li><a href="#被动技能">被动技能</a></li>
+      </ol>
+    </li>
+    <li><a href="#gameplayabilitysystem">GameplayAbilitySystem</a>
+      <ol>
+        <li><a href="#初始化技能组件">初始化技能组件</a></li>
+        <li><a href="#attribute">Attribute</a></li>
+      </ol>
+    </li>
+    <li><a href="#药瓶-effect-actor">药瓶 Effect Actor</a></li>
+    <li><a href="#附">附</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/">GAS A - 技能系统总览</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 10, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 7 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="起手式">起手式
+</h2><p><strong>网页图片模糊 点击图片预览高清大图</strong></p>
+<p><a class="link" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine"  target="_blank" rel="noopener"
+    >https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine</a><br/>↑首先看一遍官方文档↑</p>
+<p>GAS学习资料:<br/><a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese"  target="_blank" rel="noopener"
+    >https://github.com/BillEliot/GASDocumentation_Chinese</a><br/></p>
+<p>官方的ActionRPG项目，</p>
+<img src="ActionRPG.png" alt="img" style="zoom:50%;" />
+<p>GAS A系列是由 &lt; Gameplay Ability System - Top Down RPG&gt; 这一套教程来的,简单的细枝末节不记录<br/><a class="link" href="https://www.bilibili.com/video/BV1JD421E7yC"  target="_blank" rel="noopener"
+    >https://www.bilibili.com/video/BV1JD421E7yC</a><br/></p>
+<p><strong>与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。<br/>此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。</strong></p>
+<p>角色类拥有<strong>UAbilitySystemComponent</strong> 和 <strong>UAttributeSet</strong> 两个组件，AttributeSet保存角色的属性值，<br/>例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.<br/>尽管AttributeSet提供了Setter方法，也不该手动调用它去做一些事情.</p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Attribute.png"
+	width="568"
+	height="104"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Attribute_hu3928359938825299283.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Attribute_hu2050239321088977538.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="546"
+		data-flex-basis="1310px"
+	
+></p>
+<p>GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都可以是GameplayAbility.<br/>技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义.  CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可.</p>
+<h2 id="技能执行流程">技能执行流程
+</h2><p>先描述最感兴趣的一集吧，开局就写难懂的东西 只会让脑子开局就过载，作文首先要引起读者的兴趣。<br/> 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。</p>
+<h3 id="冷却时间">冷却时间
+</h3><p>泽拉斯的Q技能一级有9秒CD，释放技能时 如果在冷却中 就不让释放，这个流程如何使用GAS来执行？<br/>GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。<br/>假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。<br/>执行流程为:<br/>GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CD<br/>GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束</p>
+<h3 id="技能耗费">技能耗费
+</h3><p>泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.<br/>GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)<br/>Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行.</p>
+<p>执行流程与 冷却时间 相似.</p>
+<h3 id="技能伤害">技能伤害
+</h3><p>有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？<br/>NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.</p>
+<p>这把开一局&lt;爆破鬼才&gt;，假如我发射一个火球，那么在火球滑行的途中，它撞到了地面 触发爆炸伤害. 这里就得范围检测Enemy，并且获得它们身上的 AbilitySystemComponent 并且对这个组件应用GE，造成伤害</p>
+<center class="half">
+    <img src="Fire_1.png" width="300"/>
+    <img src="Fire_2.png" width="300"/>
+</center>
+<h3 id="技能蓝图">技能蓝图
+</h3><p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_GA.png"
+	width="1918"
+	height="1004"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_GA_hu16880287695330780528.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_GA_hu17992905784926449050.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="191"
+		data-flex-basis="458px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_Cost.png"
+	width="1401"
+	height="768"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_Cost_hu6320484936386894104.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_Cost_hu5531946174740946488.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="182"
+		data-flex-basis="437px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_CD.png"
+	width="1392"
+	height="854"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_CD_hu1652265004360397916.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_CD_hu14135260687976926037.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="162"
+		data-flex-basis="391px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_DamageBP.png"
+	width="1902"
+	height="890"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_DamageBP_hu16319842459776224202.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Ex_DamageBP_hu16533264077760887101.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="213"
+		data-flex-basis="512px"
+	
+></p>
+<h3 id="被动技能">被动技能
+</h3><p>生命回复、法力回复 这些都是自动运行的， 每秒回复1点生命值 回复1点魔法值， 可以用GE做一个 无限时间 的效果，持续一段时间 | 无限时间 ， 这两个策略都可以设置触发周期，比如每1秒触发一次，每0.5秒触发一次 等等。</p>
+<p>自动回复就使用 无限时间 ，每秒触发一次，每次触发添加1点生命值，1点魔法值。<br/>就叫它 GE_Regeneration ，在BeginPlay时 对AbilitySystemComponent应用这个GE即可。<br/>那死亡时 不想要自动回复了怎么办？ GE可以被Apply，也可以被Remove，死亡时只要移除这个GE就行了,<br/>这是手动移除的案例.</p>
+<p>Buff也可以用一个GE完成，例如 增加50攻击力，并且持续90秒，那么就使用一个 持续一段时间的GE，让攻击力+50，时间结束后 GE自动取消. 这是自动移除的案例.<br/>手动移除方法：</p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Doc_RemoveGE.png"
+	width="1884"
+	height="948"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Doc_RemoveGE_hu15580065686303143287.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/Doc_RemoveGE_hu15659388379746501430.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="198"
+		data-flex-basis="476px"
+	
+></p>
+<h2 id="gameplayabilitysystem">GameplayAbilitySystem
+</h2><h3 id="初始化技能组件">初始化技能组件
+</h3><p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/GASWhere.png"
+	width="1623"
+	height="545"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/GASWhere_hu809498026569012602.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/GASWhere_hu16676466170656343190.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="297"
+		data-flex-basis="714px"
+	
+></p>
+<hr>
+<p><code>ASC</code>附加的<code>Actor</code>被引用作为该<code>ASC</code>的<code>OwnerActor</code>, 该<code>ASC</code>的物理代表<code>Actor</code>被称为<code>AvatarActor</code>. <code>OwnerActor</code>和<code>AvatarActor</code>可以是同一个 <code>Actor</code>, 比如MOBA游戏中的一个简单AI小兵; <br/>它们也可以是不同的<code>Actor</code>, 比如MOBA游戏中玩家控制的英雄, 其中<code>OwnerActor</code>是<code>PlayerState</code>, <br/><code>AvatarActor</code>是英雄的<code>Character</code>类. 绝大多数Actor的<code>ASC</code>都附加在其自身, <br/>如果你的Actor会重生并且重生时需要持久化<code>Attribute</code>或<code>GameplayEffect</code>(比如MOBA中的英雄), 那么<code>ASC</code>理想的位置就是<code>PlayerState</code>.</p>
+<hr>
+<p>GAS要求添加 AbilitySystemComponent (ASC) 和 AttributeSet (AS)，那么往角色身上添加 是否可行？<br/></p>
+<p>如果角色可以被摧毁、可以死亡，当CharacterActor死亡时 在它身上挂载的 ASC、AS 全都没有了，一起跟着销毁<br/>再次复活时 技能信息会丢失。 这就要求把ASC、AS放到一个可靠的地方，在这个教程里 放到了PlayerState里面。</p>
+<p><strong>问题:如何放？ 还要把玩家角色与PlayerState里的ASC、AS连接起来，这样在场景里才能通过玩家角色获得玩家的ASC、AS，如何连接？</strong> <br/></p>
+<p>ACharacter -&gt; AuraCharacterBase -&gt;Enemy / AuraCharacter , AuraCharacter 是玩家角色</p>
+<p>【Enemy 和 AuraCharacter 都继承自AuraCharacterBase 】</p>
+<p>在AuraCharacterBase 和 PlayerStae 中定义GAS的两个组件的指针，但是实体在Enemy 和 PlayerState 中创建.<br/>因为玩家角色的GAS组件要放在PlayerState里，而敌人AI就放在它自己的角色类里面.</p>
+<p>下面的内容就是解决上面的两个问题:<strong>如何放 如何连接</strong>。<br/>定义组件指针、初始化组件、连接 玩家角色 与 PlayerState 的组件.<br/>(玩家角色 被玩家控制器 控制后，就要获得PlayerState里面的ASC、AS组件)<br/>思路不清晰 可以看小节结尾的流程图.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAbilitySystemComponent</span><span class="o">&gt;</span> <span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAttributeSet</span><span class="o">&gt;</span> <span class="n">AttributeSet</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">AAuraEnemy</span><span class="o">::</span><span class="n">AAuraEnemy</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GetMesh</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetCollisionResponseToChannel</span><span class="p">(</span><span class="n">ECC_Visibility</span><span class="p">,</span><span class="n">ECR_Block</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;AbilitySystemComponent&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">SetIsReplicated</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">SetReplicationMode</span><span class="p">(</span><span class="n">EGameplayEffectReplicationMode</span><span class="o">::</span><span class="n">Mixed</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">UAuraAttributeSet</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;AttributeSet&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">HealthBar</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">UWidgetComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;HealthBar&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">HealthBar</span><span class="o">-&gt;</span><span class="n">SetupAttachment</span><span class="p">(</span><span class="n">GetRootComponent</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">AAuraPlayerState</span><span class="o">::</span><span class="n">AAuraPlayerState</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">//NetUpdateFrequency = 100.f;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">SetNetUpdateFrequency</span><span class="p">(</span><span class="mf">100.f</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;AbilitySystemComponent&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">SetIsReplicated</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">SetReplicationMode</span><span class="p">(</span><span class="n">EGameplayEffectReplicationMode</span><span class="o">::</span><span class="n">Mixed</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">UAuraAttributeSet</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;AttributeSet&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>完了还要在AuraCharacterBase继承一个接口，用来获得ASC，因为要与ASC通信，不管是哪个类，只要调用这个接口就能得到它的ASC组件.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">AAuraCharacterBase</span> <span class="p">:</span> <span class="k">public</span> <span class="n">ACharacter</span><span class="p">,</span><span class="k">public</span> <span class="n">IAbilitySystemInterface</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="nf">GetAbilitySystemComponent</span><span class="p">()</span> <span class="k">const</span> <span class="k">override</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">UAttributeSet</span><span class="o">*</span> <span class="nf">GetAttributeSet</span><span class="p">()</span><span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">AttributeSet</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">AAuraCharacterBase</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">()</span> <span class="k">const</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>现在Enemy的组件注册完了，玩家角色的还没有结束，它的组件都在PlayerState里面，还要再手动从PS里获取组件.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">AAuraPlayerState</span> <span class="p">:</span> <span class="k">public</span> <span class="n">APlayerState</span><span class="p">,</span><span class="k">public</span> <span class="n">IAbilitySystemInterface</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="nf">GetAbilitySystemComponent</span><span class="p">()</span> <span class="k">const</span> <span class="k">override</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAttributeSet</span><span class="o">*</span> <span class="nf">GetAttributeSet</span><span class="p">()</span><span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">AttributeSet</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">AAuraPlayerState</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">()</span> <span class="k">const</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="err">——————————————————————————————————————————————————————————————————————————————————————</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraCharacter</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">AController</span><span class="o">*</span> <span class="n">NewController</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">NewController</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Initi Ability Actor info For the Server;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">InitAbilityActorInfo</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraCharacter</span><span class="o">::</span><span class="n">InitAbilityActorInfo</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AAuraPlayerState</span><span class="o">*</span> <span class="n">AuraPlayerState</span> <span class="o">=</span> <span class="n">GetPlayerState</span><span class="o">&lt;</span><span class="n">AAuraPlayerState</span><span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">AuraPlayerState</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">AuraPlayerState</span><span class="o">-&gt;</span><span class="n">GetAbilitySystemComponent</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">InitAbilityActorInfo</span><span class="p">(</span><span class="n">AuraPlayerState</span><span class="p">,</span><span class="k">this</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">AuraPlayerState</span><span class="o">-&gt;</span><span class="n">GetAttributeSet</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这样就把玩家角色和AuraPlayerState链接起来了，AbilitySystemComponent 和 AttributeSet 都初始化了.</p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/CallPS.png"
+	width="1725"
+	height="821"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/CallPS_hu3884735725684586990.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/CallPS_hu18174416032094736467.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="210"
+		data-flex-basis="504px"
+	
+></p>
+<h3 id="attribute">Attribute
+</h3><p><a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#43-attribute"  target="_blank" rel="noopener"
+    >https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#43-attribute</a></p>
+<p>Attribute里定义生命值，FGameplayAttributeData Health; FGameplayAttributeData 是一个结构体，其数值是浮点型，结构体里面有一个<code>BaseValue</code>和一个<code>CurrentValue</code>，<br/>假如当前生命值是100，BaseValue = CurrentValue = 100 ， 有一个持续10秒的加50生命值的buff，<br/>一个NPC吃了一个buff 这是他生命值发生的变化， BaseValue = 100 ， CurrentValue = 100 + 50 = 150，<br/>10秒后 buff结束，CurrentValue就会变回BaseValue， 此时 BaseValue = CurrentValue = 100.</p>
+<hr>
+<p><code>即刻(Instant)GameplayEffect</code>可以永久性的修改<code>BaseValue</code>, <br/>而<code>持续(Duration)</code>和<code>无限(Infinite)GameplayEffect</code>可以修改CurrentValue. <br/>周期性(Periodic)<code>GameplayEffect</code>被视为<code>即刻(Instant)GameplayEffect</code>并且可以修改<code>BaseValue</code>.</p>
+<hr>
+<p>AttributeSet.h里提供了一个Help宏，它被注释了，这个宏提供4个函数，<br/>Getter、Setter、Init以及一个静态的GetAttribute</p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASMacro.png"
+	width="1314"
+	height="470"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASMacro_hu8795499376323150423.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASMacro_hu10925112338570188504.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="279"
+		data-flex-basis="670px"
+	
+></p>
+<p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASMacroFunc.png"
+	width="612"
+	height="110"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASMacroFunc_hu18115618606214928555.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASMacroFunc_hu8427588148165987175.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="556"
+		data-flex-basis="1335px"
+	
+></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
+</span></span></span><span class="line"><span class="cl"><span class="cp">GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
+</span></span></span><span class="line"><span class="cl"><span class="cp">GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
+</span></span></span><span class="line"><span class="cl"><span class="cp">GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
+</span></span></span><span class="line"><span class="cl"><span class="cp">GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>将它复制到自己的类里面使用，定义一个Health属性，并且初始化为100.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="s">&#34;)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Health</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Health</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASInitHP.png"
+	width="396"
+	height="102"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASInitHP_hu15395493473030050594.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/ASInitHP_hu12864640954376408477.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="388"
+		data-flex-basis="931px"
+	
+></p>
+<h2 id="药瓶-effect-actor">药瓶 Effect Actor
+</h2><p><img src="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/EActor.png"
+	width="1586"
+	height="336"
+	srcset="/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/EActor_hu7089828003073512469.png 480w, /p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/EActor_hu9061205734325082516.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="472"
+		data-flex-basis="1132px"
+	
+></p>
+<p>这个Actor这样修改属性只是为了简单测试，属性修改要使用GE.  当角色碰到这个Actor时 角色的Health会增加50.</p>
+<h2 id="附">附
+</h2><p>教程里因为版本不同 名称不同的对照，一些属性名称 , 还有打起来贼他妈麻烦的代码片段， 都可以到这复制</p>
+<p>GameplayEffectAssetTag 【=】 Tags This Effect Has<br/>
+GrantedTags 【=】 Grant Tags to Target Actor<br/>
+Ongoing Tag Requirements 【=】 Require Tags to Apply / Continue This Effect<br/>
+Application Tag Requirements 【=】 Require Tags to Apply / Continue This Effect<br/>
+Removal Tag Requirements 【=】 Require Tags to Apply / Continue This Effect<br/>
+Remove Gameplay Effect With Tags 【=】 Remove Other Effects<br/></p>
+<p>Armor,ArmorPenetration,BlockChance,</p>
+<p>CriticalHitChance,CriticalHitDamage,CriticalHitResistance,</p>
+<p>HealthRegeneration,ManaRegeneration</p>
+<p>Attribute.Primary.Intelligence
+Row_Strength<br/>
+Row_Intelligence<br/>
+Row_Resilience<br/>
+Row_Vigor<br/></p>
+<p>Row_Armor<br/>
+Row_ArmorPenetration<br/>
+Row_BlockChance<br/>
+Row_CriticalHitChance<br/>
+Row_CriticalHitDamage<br/>
+Row_CriticalHitResistance<br/>
+Row_HealthRegeneration<br/>
+Row_ManaRegeneration<br/>
+Row_MaxHealth<br/>
+Row_MaxMana<br/></p>
+<p>AuraGameplayTags.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#pragma once
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;CoreMinimal.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;GameplayTagContainer.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">FAuraGameplayTags</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="k">static</span> <span class="k">const</span> <span class="n">FAuraGameplayTags</span><span class="o">&amp;</span> <span class="n">Get</span><span class="p">()</span> <span class="p">{</span><span class="k">return</span> <span class="n">GameplayTags</span><span class="p">;}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">static</span> <span class="kt">void</span> <span class="nf">InitializeNativeGameplayTags</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Primary_Strength</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Primary_Intelligence</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Primary_Resilience</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Primary_Vigor</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_Armor</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_ArmorPenetration</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_BlockChance</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_CriticalHitChance</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_CriticalHitDamage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_CriticalHitResistance</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_HealthRegeneration</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_ManaRegeneration</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_MaxHealth</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Attribute_Secondary_MaxMana</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag_LMB</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag_RMB</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag_1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag_2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag_3</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag_4</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Damage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">Effect_HitReact</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="k">private</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="k">static</span> <span class="n">FAuraGameplayTags</span> <span class="n">GameplayTags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>AuraGameplayTags.cpp</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;AuraGameplayTags.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;GameplayTagsManager.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="n">FAuraGameplayTags</span> <span class="n">FAuraGameplayTags</span><span class="o">::</span><span class="n">GameplayTags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">FAuraGameplayTags</span><span class="o">::</span><span class="n">InitializeNativeGameplayTags</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Strength</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Primary.Strength&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Increases physical damage&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Intelligence</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Primary.Intelligence&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Increases magical damage&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Resilience</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Primary.Resilience&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Increases Armor and ArmorPenetration&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Vigor</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Primary.Vigor&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Increases Health&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="c1">////////////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_Armor</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.Armor&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Reduce damage taken&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_ArmorPenetration</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.ArmorPenetration&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Ignore percentage of enemy&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_BlockChance</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.BlockChance&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Chance to cut incoming damage in half&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_CriticalHitChance</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.CriticalHitChance&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Chance to double damage plus critical hit bonus&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_CriticalHitDamage</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.CriticalHitDamage&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Bonus damage added when a critical hit is scored&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_CriticalHitResistance</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.CriticalHitResistance&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Reduces critical hit chance of attacking enemies&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_HealthRegeneration</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.HealthRegeneration&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Amount of Health regeneration every 1 second&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_ManaRegeneration</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.ManaRegeneration&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Amount of Mana regeneration every 1 second&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_MaxHealth</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.MaxHealth&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Maximum amount of Health&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_MaxMana</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Attribute.Secondary.MaxMana&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Maximum amount of Mana&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">/////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">InputTag_LMB</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;InputTag.LMB&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Input Tag for Left Mouse Button&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">InputTag_RMB</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;InputTag.RMB&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Input Tag for Right Mouse Button&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">InputTag_1</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;InputTag.1&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Input Tag for Key 1&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">InputTag_2</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;InputTag.2&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Input Tag for Key 2&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">InputTag_3</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;InputTag.3&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Input Tag for Key 3&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">InputTag_4</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;InputTag.4&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Input Tag for Key 4&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">////////////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Damage</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Damage&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Damage&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayTags</span><span class="p">.</span><span class="n">Effect_HitReact</span> <span class="o">=</span> <span class="n">UGameplayTagsManager</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">AddNativeGameplayTag</span>
+</span></span><span class="line"><span class="cl">	<span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Effect.HitReact&#34;</span><span class="p">),</span> <span class="n">FString</span><span class="p">(</span><span class="s">&#34;Tag granted when Hit Reacting&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>AuraAttributeSet.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">////////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Strength</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Primary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Strength</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Strength</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Intelligence</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Primary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Intelligence</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Intelligence</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Resilience</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Primary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Resilience</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Resilience</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Vigor</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Primary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Vigor</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Vigor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="c1">///////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_MaxHealth</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">MaxHealth</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">MaxHealth</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_MaxMana</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">MaxMana</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">MaxMana</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Armor</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Armor</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Armor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_ArmorPenetration</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">ArmorPenetration</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">ArmorPenetration</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_BlockChance</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">BlockChance</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">BlockChance</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_CriticalHitChance</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">CriticalHitChance</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">CriticalHitChance</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_CriticalHitDamage</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">CriticalHitDamage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">CriticalHitDamage</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_CriticalHitResistance</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">CriticalHitResistance</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">CriticalHitResistance</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_HealthRegeneration</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">HealthRegeneration</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">HealthRegeneration</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_ManaRegeneration</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Secondary Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">ManaRegeneration</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">ManaRegeneration</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="c1">///////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Health</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Vital Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Health</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Health</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">ReplicatedUsing</span><span class="o">=</span><span class="n">OnRep_Mana</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Vital Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">Mana</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">Mana</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">/////////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">,</span> <span class="n">Category</span><span class="o">=</span><span class="s">&#34;Meta Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayAttributeData</span> <span class="n">IncomingDamage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_ACCESSORS</span><span class="p">(</span><span class="n">UAuraAttributeSet</span><span class="p">,</span><span class="n">IncomingDamage</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="c1">////////////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">UFUNCTION</span><span class="p">()</span> <span class="kt">void</span> <span class="n">OnRep_Strength</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldStrength</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span> <span class="kt">void</span> <span class="n">OnRep_Intelligence</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldIntelligence</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span> <span class="kt">void</span> <span class="n">OnRep_Resilience</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldResilience</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_Vigor</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldVigor</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_MaxHealth</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldMaxHealth</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_MaxMana</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldMaxMana</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_Armor</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldArmor</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_ArmorPenetration</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldArmorPenetration</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_BlockChance</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldBlockChance</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_CriticalHitChance</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldCriticalHitChance</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_CriticalHitDamage</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldCriticalHitDamage</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_CriticalHitResistance</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldCriticalHitResistance</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_HealthRegeneration</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldHealthRegeneration</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_ManaRegeneration</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldManaRegeneration</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_Health</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldHealth</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>	<span class="kt">void</span> <span class="n">OnRep_Mana</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttributeData</span><span class="o">&amp;</span> <span class="n">OldMana</span><span class="p">)</span><span class="k">const</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>AuraAttributeSet.cpp</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UAuraAttributeSet</span><span class="o">::</span><span class="n">UAuraAttributeSet</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">FAuraGameplayTags</span><span class="o">&amp;</span> <span class="n">GameplayTags</span> <span class="o">=</span> <span class="n">FAuraGameplayTags</span><span class="o">::</span><span class="n">Get</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Strength</span><span class="p">,</span>					<span class="n">GetStrengthAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Intelligence</span><span class="p">,</span>				<span class="n">GetIntelligenceAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Resilience</span><span class="p">,</span>				<span class="n">GetResilienceAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Primary_Vigor</span><span class="p">,</span>					<span class="n">GetVigorAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_Armor</span><span class="p">,</span>					<span class="n">GetArmorAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_ArmorPenetration</span><span class="p">,</span>		<span class="n">GetArmorPenetrationAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_BlockChance</span><span class="p">,</span>			<span class="n">GetBlockChanceAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_CriticalHitChance</span><span class="p">,</span>		<span class="n">GetCriticalHitChanceAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_CriticalHitDamage</span><span class="p">,</span>		<span class="n">GetCriticalHitDamageAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_CriticalHitResistance</span><span class="p">,</span>	<span class="n">GetCriticalHitResistanceAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_HealthRegeneration</span><span class="p">,</span>		<span class="n">GetHealthRegenerationAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_ManaRegeneration</span><span class="p">,</span>		<span class="n">GetManaRegenerationAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_MaxHealth</span><span class="p">,</span>				<span class="n">GetMaxHealthAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TagToAttribute</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Attribute_Secondary_MaxMana</span><span class="p">,</span>				<span class="n">GetMaxManaAttribute</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>AuraAttributeSet.cpp 这是一个宏，那些属性的网络同步函数写起来真逆天，用这个宏去写</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#define ATTRIBUTE_REP(Name)\
+</span></span></span><span class="line"><span class="cl"><span class="cp">void UAuraAttributeSet::OnRep_##Name(const FGameplayAttributeData&amp; Old##Name)const\
+</span></span></span><span class="line"><span class="cl"><span class="cp">{\
+</span></span></span><span class="line"><span class="cl"><span class="cp">	GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet,Name,Old##Name);\
+</span></span></span><span class="line"><span class="cl"><span class="cp">};
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define ATTRIBUTE_NOTIFY(Name)\
+</span></span></span><span class="line"><span class="cl"><span class="cp">DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet,Name,COND_None,REPNOTIFY_Always);
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#pragma region Net
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Health</span><span class="p">)</span>				<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Mana</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Strength</span><span class="p">)</span>				<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Intelligence</span><span class="p">)</span>		<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Resilience</span><span class="p">)</span>		<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Vigor</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">Armor</span><span class="p">)</span>				<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">ArmorPenetration</span><span class="p">)</span>	<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">BlockChance</span><span class="p">)</span>		<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">CriticalHitChance</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">MaxHealth</span><span class="p">)</span>			<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">MaxMana</span><span class="p">)</span>			<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">CriticalHitDamage</span><span class="p">)</span><span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">CriticalHitResistance</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">HealthRegeneration</span><span class="p">)</span>	<span class="n">ATTRIBUTE_REP</span><span class="p">(</span><span class="n">ManaRegeneration</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAttributeSet</span><span class="o">::</span><span class="n">GetLifetimeReplicatedProps</span><span class="p">(</span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">FLifetimeProperty</span><span class="o">&gt;&amp;</span> <span class="n">OutLifetimeProps</span><span class="p">)</span> <span class="k">const</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">GetLifetimeReplicatedProps</span><span class="p">(</span><span class="n">OutLifetimeProps</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Health</span><span class="p">)</span>				<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Mana</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Strength</span><span class="p">)</span>				<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Intelligence</span><span class="p">)</span>		<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Resilience</span><span class="p">)</span>		<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Vigor</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">Armor</span><span class="p">)</span>					<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">ArmorPenetration</span><span class="p">)</span>	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">BlockChance</span><span class="p">)</span>		<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">CriticalHitChance</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">MaxHealth</span><span class="p">)</span>				<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">MaxMana</span><span class="p">)</span>			<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">CriticalHitDamage</span><span class="p">)</span>	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">CriticalHitResistance</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">HealthRegeneration</span><span class="p">)</span>	<span class="n">ATTRIBUTE_NOTIFY</span><span class="p">(</span><span class="n">ManaRegeneration</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#pragma endregion 
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            国窖1573 - 
+        
+        2025 AKaKLya
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.29.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

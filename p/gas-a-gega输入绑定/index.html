@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="TODO:属性菜单 没写，太他妈长了，以后再填. UI获取GE的GameplayTag消息 应用GE时，获得GE的AssetTag，并且根据这个Tag 做点事情， 例如：捡到血瓶时，如果GE里面有 Message.xx.xx 的Tag，就通知UI显示“捡到一个血瓶” 之类的文字. 整体框架: OverlayWidgetController.cpp 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 void UAuraAbilitySystemComponent::AbilityInfoSet() { OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&amp;UAuraAbilitySystemComponent::ClientEffectApplied); } void UOverlayWidgetController::BindCallbacksToDependencies() { const UAuraAttributeSet* AuraAttributeSet = Cast&lt;UAuraAttributeSet&gt;(AttributeSet); AbilitySystemComponent-&gt;GetGameplayAttributeValueChangeDelegate(AuraAttributeSet-&gt;GetHealthAttribute()) .">
+<title>GAS A - GE、GA、输入绑定</title>
+
+<link rel='canonical' href='https://akaklya.github.io/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - GE、GA、输入绑定">
+<meta property='og:description' content="TODO:属性菜单 没写，太他妈长了，以后再填. UI获取GE的GameplayTag消息 应用GE时，获得GE的AssetTag，并且根据这个Tag 做点事情， 例如：捡到血瓶时，如果GE里面有 Message.xx.xx 的Tag，就通知UI显示“捡到一个血瓶” 之类的文字. 整体框架: OverlayWidgetController.cpp 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 void UAuraAbilitySystemComponent::AbilityInfoSet() { OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&amp;UAuraAbilitySystemComponent::ClientEffectApplied); } void UOverlayWidgetController::BindCallbacksToDependencies() { const UAuraAttributeSet* AuraAttributeSet = Cast&lt;UAuraAttributeSet&gt;(AttributeSet); AbilitySystemComponent-&gt;GetGameplayAttributeValueChangeDelegate(AuraAttributeSet-&gt;GetHealthAttribute()) .">
+<meta property='og:url' content='https://akaklya.github.io/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/'>
+<meta property='og:site_name' content='AKaKLya'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-11T12:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-11T12:59:56&#43;08:00'/>
+<meta name="twitter:title" content="GAS A - GE、GA、输入绑定">
+<meta name="twitter:description" content="TODO:属性菜单 没写，太他妈长了，以后再填. UI获取GE的GameplayTag消息 应用GE时，获得GE的AssetTag，并且根据这个Tag 做点事情， 例如：捡到血瓶时，如果GE里面有 Message.xx.xx 的Tag，就通知UI显示“捡到一个血瓶” 之类的文字. 整体框架: OverlayWidgetController.cpp 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 void UAuraAbilitySystemComponent::AbilityInfoSet() { OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&amp;UAuraAbilitySystemComponent::ClientEffectApplied); } void UOverlayWidgetController::BindCallbacksToDependencies() { const UAuraAttributeSet* AuraAttributeSet = Cast&lt;UAuraAttributeSet&gt;(AttributeSet); AbilitySystemComponent-&gt;GetGameplayAttributeValueChangeDelegate(AuraAttributeSet-&gt;GetHealthAttribute()) .">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/d_hu15622052934649275245.jpg" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🍥</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">AKaKLya</a></h1>
+            <h2 class="site-description">点击</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#ui获取ge的gameplaytag消息">UI获取GE的GameplayTag消息</a></li>
+    <li><a href="#mmc">MMC</a></li>
+    <li><a href="#gameplayability">GameplayAbility</a></li>
+    <li><a href="#绑定enhancedinput">绑定EnhancedInput</a>
+      <ol>
+        <li><a href="#绑定gameplaytag和inputaction">绑定GameplayTag和InputAction</a>
+          <ol>
+            <li><a href="#总结">总结</a></li>
+          </ol>
+        </li>
+        <li><a href="#激活技能">激活技能</a></li>
+      </ol>
+    </li>
+    <li><a href="#投射物">投射物</a>
+      <ol>
+        <li><a href="#abilitytask">AbilityTask</a></li>
+        <li><a href="#gameplayevent">GameplayEvent</a></li>
+      </ol>
+    </li>
+    <li><a href="#使用数据表初始化敌人属性">使用数据表初始化敌人属性</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/">GAS A - GE、GA、输入绑定</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 11, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 11 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>TODO:属性菜单 没写，太他妈长了，以后再填.</p>
+<h2 id="ui获取ge的gameplaytag消息">UI获取GE的GameplayTag消息
+</h2><p>应用GE时，获得GE的AssetTag，并且根据这个Tag 做点事情，</p>
+<p>例如：捡到血瓶时，如果GE里面有 Message.xx.xx 的Tag，就通知UI显示“捡到一个血瓶” 之类的文字.</p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/health_pick.png"
+	width="418"
+	height="243"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/health_pick_hu1041244963068856528.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/health_pick_hu16651598715226712461.png 1024w"
+	loading="lazy"
+	
+		alt="Pick"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="172"
+		data-flex-basis="412px"
+	
+></p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/health_ge.png"
+	width="1364"
+	height="824"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/health_ge_hu1397455204367945153.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/health_ge_hu265367971378371179.png 1024w"
+	loading="lazy"
+	
+		alt="GE"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="165"
+		data-flex-basis="397px"
+	
+></p>
+<hr>
+<p>整体框架:</p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_GE_1.png"
+	width="1840"
+	height="857"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_GE_1_hu2576473845438089183.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_GE_1_hu784334285571936130.png 1024w"
+	loading="lazy"
+	
+		alt="GE_UI"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="214"
+		data-flex-basis="515px"
+	
+></p>
+<hr>
+<p>OverlayWidgetController.cpp</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAbilitySystemComponent</span><span class="o">::</span><span class="n">AbilityInfoSet</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">OnGameplayEffectAppliedDelegateToSelf</span><span class="p">.</span><span class="n">AddUObject</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="o">&amp;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">::</span><span class="n">ClientEffectApplied</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UOverlayWidgetController</span><span class="o">::</span><span class="n">BindCallbacksToDependencies</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">UAuraAttributeSet</span><span class="o">*</span> <span class="n">AuraAttributeSet</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraAttributeSet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AttributeSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnHealthChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnMaxHealthChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnManaChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnMaxManaChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AbilitySystemComponent</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">EffectAssetTags</span><span class="p">.</span><span class="n">AddLambda</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FGameplayTagContainer</span><span class="o">&amp;</span> <span class="n">AssetTags</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="nl">Tag</span> <span class="p">:</span> <span class="n">AssetTags</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="k">auto</span> <span class="n">MessageTag</span> <span class="o">=</span> <span class="n">FGameplayTag</span><span class="o">::</span><span class="n">RequestGameplayTag</span><span class="p">(</span><span class="n">FName</span><span class="p">(</span><span class="s">&#34;Message&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">				<span class="k">if</span> <span class="p">(</span><span class="n">Tag</span><span class="p">.</span><span class="n">MatchesTag</span><span class="p">(</span><span class="n">MessageTag</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">				<span class="p">{</span>
+</span></span><span class="line"><span class="cl">					<span class="n">FUIWidgetRow</span><span class="o">*</span> <span class="n">Row</span> <span class="o">=</span> <span class="n">GetDataTableRowByTag</span><span class="o">&lt;</span><span class="n">FUIWidgetRow</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MessageWidgetDataTable</span><span class="p">,</span><span class="n">Tag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">					<span class="n">MessageWidgetRowDelegate</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="o">*</span><span class="n">Row</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>WidgetController绑定ASC的生命值等属性变化后，再追加一个委托的订阅，ASC在GE应用时 能获得GE的AssetTag，这里只筛选Message的Tag，把它广播出来，WidgetController就能收到ASC应用的GE的标签.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam</span><span class="p">(</span><span class="n">FMessageWidgetRowSignature</span><span class="p">,</span><span class="n">FUIWidgetRow</span><span class="p">,</span><span class="n">Row</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintAssignable</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;GAS|Messages&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">FMessageWidgetRowSignature</span> <span class="n">MessageWidgetRowDelegate</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>WidgetController里面再来一个委托，让UMG在蓝图里面订阅，把接收到的GE标签广播出去，让UMG订阅接收.</p>
+<hr>
+<p>OverlayWidgetController.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">USTRUCT</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">FUIWidgetRow</span> <span class="o">:</span> <span class="k">public</span> <span class="n">FTableRowBase</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">AssetTag</span> <span class="o">=</span> <span class="n">FGameplayTag</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FText</span> <span class="n">Message</span> <span class="o">=</span> <span class="n">FText</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">UAuraUserWidget</span><span class="o">&gt;</span> <span class="n">MessageWidget</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UTexture2D</span><span class="o">*</span> <span class="n">Image</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="c1">//-------------------------------------//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="n">T</span><span class="o">*</span> <span class="n">GetDataTableRowByTag</span><span class="p">(</span><span class="n">UDataTable</span><span class="o">*</span> <span class="n">DataTable</span><span class="p">,</span><span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="n">Tag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="n">T</span><span class="o">*</span> <span class="n">UOverlayWidgetController</span><span class="o">::</span><span class="n">GetDataTableRowByTag</span><span class="p">(</span><span class="n">UDataTable</span><span class="o">*</span> <span class="n">DataTable</span><span class="p">,</span> <span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="n">Tag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">DataTable</span><span class="o">-&gt;</span><span class="n">FindRow</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Tag</span><span class="p">.</span><span class="n">GetTagName</span><span class="p">(),</span><span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">//---------------------------------------//
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>查表，通过Tag获得Message，并广播给蓝图</p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_DT.png"
+	width="1111"
+	height="601"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_DT_hu12644675555274464313.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_DT_hu1663540463027378707.png 1024w"
+	loading="lazy"
+	
+		alt="DT"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="184"
+		data-flex-basis="443px"
+	
+></p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_BP_Msg.png"
+	width="1919"
+	height="995"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_BP_Msg_hu970805159960070925.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/UI_BP_Msg_hu1583330286859285313.png 1024w"
+	loading="lazy"
+	
+		alt="UI_BP_Msg.png"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="192"
+		data-flex-basis="462px"
+	
+></p>
+<h2 id="mmc">MMC
+</h2><p>根据等级设置血量</p>
+<p>角色基类AAuraCharacterBase添加一个ICombatInterface接口，Enemy和AAuraCharacter都重写一下GetPlayerLeve函数.<br/>Enemy的Level就在Enemy类里面，玩家的Level在PlayerState里面，</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UINTERFACE</span><span class="p">(</span><span class="n">MinimalAPI</span><span class="p">,</span><span class="n">BlueprintType</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">UCombatInterface</span> <span class="o">:</span> <span class="k">public</span> <span class="n">UInterface</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * 
+</span></span></span><span class="line"><span class="cl"><span class="cm"> */</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="n">ICombatInterface</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="k">virtual</span> <span class="n">int32</span> <span class="n">GetPlayerLeve</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//---------------------------//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">AAuraCharacterBase</span> <span class="p">:</span> <span class="k">public</span> <span class="n">ACharacter</span><span class="p">,</span><span class="k">public</span> <span class="n">IAbilitySystemInterface</span><span class="p">,</span><span class="k">public</span> <span class="n">ICombatInterface</span>
+</span></span><span class="line"><span class="cl"><span class="c1">//--------------------------//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">int32</span> <span class="n">AAuraEnemy</span><span class="o">::</span><span class="n">GetPlayerLeve</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">Level</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">int32</span> <span class="n">AAuraCharacter</span><span class="o">::</span><span class="n">GetPlayerLeve</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AAuraPlayerState</span><span class="o">*</span> <span class="n">AuraPlayerState</span> <span class="o">=</span> <span class="n">GetPlayerState</span><span class="o">&lt;</span><span class="n">AAuraPlayerState</span><span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">AuraPlayerState</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">AuraPlayerState</span><span class="o">-&gt;</span><span class="n">GetPlayerLeve</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>MMC 自定义计算</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UMMC_MaxHealth</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UGameplayModMagnitudeCalculation</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UMMC_MaxHealth</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">virtual</span> <span class="kt">float</span> <span class="nf">CalculateBaseMagnitude_Implementation</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayEffectSpec</span><span class="o">&amp;</span> <span class="n">Spec</span><span class="p">)</span> <span class="k">const</span> <span class="k">override</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">private</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectAttributeCaptureDefinition</span> <span class="n">VigorDef</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UMMC_MaxHealth</span><span class="o">::</span><span class="n">UMMC_MaxHealth</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">VigorDef</span><span class="p">.</span><span class="n">AttributeToCapture</span> <span class="o">=</span> <span class="n">UAuraAttributeSet</span><span class="o">::</span><span class="n">GetVigorAttribute</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">VigorDef</span><span class="p">.</span><span class="n">AttributeSource</span> <span class="o">=</span> <span class="n">EGameplayEffectAttributeCaptureSource</span><span class="o">::</span><span class="n">Target</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">VigorDef</span><span class="p">.</span><span class="n">bSnapshot</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">RelevantAttributesToCapture</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">VigorDef</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">float</span> <span class="n">UMMC_MaxHealth</span><span class="o">::</span><span class="n">CalculateBaseMagnitude_Implementation</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayEffectSpec</span><span class="o">&amp;</span> <span class="n">Spec</span><span class="p">)</span> <span class="k">const</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">FGameplayTagContainer</span><span class="o">*</span> <span class="n">TargetTags</span> <span class="o">=</span> <span class="n">Spec</span><span class="p">.</span><span class="n">CapturedTargetTags</span><span class="p">.</span><span class="n">GetAggregatedTags</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">FGameplayTagContainer</span><span class="o">*</span> <span class="n">SourceTags</span> <span class="o">=</span> <span class="n">Spec</span><span class="p">.</span><span class="n">CapturedSourceTags</span><span class="p">.</span><span class="n">GetAggregatedTags</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">FAggregatorEvaluateParameters</span> <span class="n">EvaluateParameters</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">EvaluateParameters</span><span class="p">.</span><span class="n">SourceTags</span> <span class="o">=</span> <span class="n">SourceTags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">EvaluateParameters</span><span class="p">.</span><span class="n">TargetTags</span> <span class="o">=</span> <span class="n">TargetTags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="n">Vigor</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GetCapturedAttributeMagnitude</span><span class="p">(</span><span class="n">VigorDef</span><span class="p">,</span><span class="n">Spec</span><span class="p">,</span><span class="n">EvaluateParameters</span><span class="p">,</span><span class="n">Vigor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Vigor</span> <span class="o">=</span> <span class="n">FMath</span><span class="o">::</span><span class="n">Max</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Vigor</span><span class="p">,</span><span class="mf">0.0f</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">ICombatInterface</span><span class="o">*</span> <span class="n">Interface</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">ICombatInterface</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Spec</span><span class="p">.</span><span class="n">GetContext</span><span class="p">().</span><span class="n">GetSourceObject</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">int32</span> <span class="n">PlayerLevel</span> <span class="o">=</span> <span class="n">Interface</span><span class="o">-&gt;</span><span class="n">GetPlayerLeve</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="mi">80</span> <span class="o">+</span> <span class="mf">2.5</span> <span class="o">*</span> <span class="n">Vigor</span> <span class="o">+</span> <span class="mf">10.0</span> <span class="o">*</span> <span class="n">PlayerLevel</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="gameplayability">GameplayAbility
+</h2><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UAuraGameplayAbility</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UGameplayAbility</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Input&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">StartupInputTag</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Damage&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FScalableFloat</span> <span class="n">Damage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>GA里的StartupInputTag是用来绑定输入的，参见后文的 “绑定EnhancedInput“</p>
+<p>ASC类里的AddCharacterAbility函数，根据角色类传过来的技能Array赋予技能<br/>从StartupAbility里面创建FGameplayAbilitySpec，并且用StartupInputTag作为动态Tag，传入Spec.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAbilitySystemComponent</span><span class="o">::</span><span class="n">AddCharacterAbility</span><span class="p">(</span><span class="k">const</span> <span class="n">TArray</span><span class="o">&lt;</span><span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UGameplayAbility</span><span class="o">&gt;&gt;&amp;</span> <span class="n">StartupAbility</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="nl">AbilityClass</span> <span class="p">:</span> <span class="n">StartupAbility</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">FGameplayAbilitySpec</span> <span class="n">AbilitySpec</span> <span class="o">=</span> <span class="n">FGameplayAbilitySpec</span><span class="p">(</span><span class="n">AbilityClass</span><span class="p">,</span> <span class="mf">1.0f</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">AuraAbility</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraGameplayAbility</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">.</span><span class="n">Ability</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">AbilitySpec</span><span class="p">.</span><span class="n">GetDynamicSpecSourceTags</span><span class="p">().</span><span class="n">AddTag</span><span class="p">(</span><span class="n">AuraAbility</span><span class="o">-&gt;</span><span class="n">StartupInputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="n">GiveAbility</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">/*GameplayAbilitySpec*
+</span></span><span class="line"><span class="cl"> * An activatable ability spec, hosted on the ability system component. This defines both what the ability is (what class, what level, input binding etc)
+</span></span><span class="line"><span class="cl"> * and also holds runtime state that must be kept outside of the ability being instanced/activated.
+</span></span><span class="line"><span class="cl"> */
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">* 可激活的能力规范，托管在能力系统组件上。这既定义了能力是什么（什么类别、什么级别、输入绑定等）
+</span></span><span class="line"><span class="cl">* 也保存了必须保留在实例化/激活的能力之外的运行时状态。
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>角色基类里用一个TArray保存初始技能，基类AddCharacterAbility函数赋予技能.<br/>在玩家类的PossessedBy函数里调用AddCharacterAbility.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Ability&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">TArray</span><span class="o">&lt;</span><span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UGameplayAbility</span><span class="o">&gt;&gt;</span> <span class="n">StartupAbility</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraCharacterBase</span><span class="o">::</span><span class="n">AddCharacterAbility</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAuraAbilitySystemComponent</span><span class="o">*</span> <span class="n">AuraASC</span> <span class="o">=</span> <span class="n">CastChecked</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AbilitySystemComponent</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">HasAuthority</span><span class="p">())</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AuraASC</span><span class="o">-&gt;</span><span class="n">AddCharacterAbility</span><span class="p">(</span><span class="n">StartupAbility</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraCharacter</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">AController</span><span class="o">*</span> <span class="n">NewController</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">NewController</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Initi Ability Actor info For the Server;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">InitAbilityActorInfo</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AddCharacterAbility</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><img src="GiveGA.png" alt="image-20250114220913555" style="zoom:80%;" />
+<hr>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>GATag</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Activation Owned Tags</td>
+<td>当技能激活时，将设置的Tag应用给技能所有者，在结束时删除。如果将AbilitySystemGlobals里面的配置ReplicateActivationOwnedTags开启，Tag还将会被复制。</td>
+</tr>
+<tr>
+<td>Activation Required Tags</td>
+<td>当技能激活者拥有设置的所有的Tag时，此技能才能够被激活。</td>
+</tr>
+<tr>
+<td>Activation Blocked Tags</td>
+<td>当技能激活者有一项设置的Tag，技能就无法被激活</td>
+</tr>
+<tr>
+<td>Source Required Tags</td>
+<td>当技能所有者拥有设置的所有的Tag时，此技能才能够被激活</td>
+</tr>
+<tr>
+<td>Source Blocked Tags</td>
+<td>当技能所有者有一项设置的Tag，技能就无法被激活</td>
+</tr>
+<tr>
+<td>Target Required Tags</td>
+<td>当技能目标者拥有设置的所有的Tag时，此技能才能够被激活</td>
+</tr>
+<tr>
+<td>Target Blocked Tags</td>
+<td>当技能目标者有一项设置的Tag，技能就无法被激活</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="绑定enhancedinput">绑定EnhancedInput
+</h2><p><a class="link" href="https://zhuanlan.zhihu.com/p/563941712"  target="_blank" rel="noopener"
+    >增强输入</a></p>
+<h3 id="绑定gameplaytag和inputaction">绑定GameplayTag和InputAction
+</h3><p>这是一个用来关联 GameplayTag 和 InputAction的资产 UAuraInputConfig</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">USTRUCT</span><span class="p">(</span><span class="n">BlueprintType</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">FAuraInputAction</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">class</span> <span class="nc">UInputAction</span><span class="o">*</span> <span class="n">InputAction</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">InputTag</span> <span class="o">=</span> <span class="n">FGameplayTag</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UAuraInputConfig</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UDataAsset</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">UInputAction</span><span class="o">*</span> <span class="n">FindAbilityInputActionForTag</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="n">InputTag</span><span class="p">,</span><span class="kt">bool</span> <span class="n">bLogNotFound</span> <span class="o">=</span> <span class="nb">false</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TArray</span><span class="o">&lt;</span><span class="n">FAuraInputAction</span><span class="o">&gt;</span> <span class="n">AbilityInputActions</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//------------------------------------//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">const</span> <span class="n">UInputAction</span><span class="o">*</span> <span class="n">UAuraInputConfig</span><span class="o">::</span><span class="n">FindAbilityInputActionForTag</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="n">InputTag</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">bLogNotFound</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">Action</span> <span class="p">:</span> <span class="n">AbilityInputActions</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span> <span class="o">&amp;&amp;</span> <span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span> <span class="o">==</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">bLogNotFound</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">UE_LOG</span><span class="p">(</span><span class="n">LogTemp</span><span class="p">,</span><span class="n">Warning</span><span class="p">,</span><span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;Can Not Found AbilityInputAction for InputTag [%s] on InputConfig [%s]&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">			<span class="o">*</span><span class="n">InputTag</span><span class="p">.</span><span class="n">ToString</span><span class="p">(),</span><span class="o">*</span><span class="n">GetNameSafe</span><span class="p">(</span><span class="k">this</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><img src="Input_1.png" alt="image-20250115154727950" style="zoom:80%;" />
+<hr>
+<p>创建增强输入组件，继承自UEnhancedInputComponent</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UAuraInputComponent</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UEnhancedInputComponent</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">UserClass</span><span class="p">,</span><span class="k">typename</span> <span class="n">PressedFuncType</span><span class="p">,</span><span class="k">typename</span> <span class="n">ReleasedFuncType</span><span class="p">,</span><span class="k">typename</span> <span class="n">HeldFuncType</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="n">BindAbilityActions</span><span class="p">(</span><span class="k">const</span> <span class="n">UAuraInputConfig</span><span class="o">*</span> <span class="n">InputConfig</span><span class="p">,</span><span class="n">UserClass</span><span class="o">*</span> <span class="n">Object</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="n">PressedFuncType</span> <span class="n">PressedFunc</span><span class="p">,</span><span class="n">ReleasedFuncType</span> <span class="n">ReleasedFunc</span><span class="p">,</span><span class="n">HeldFuncType</span> <span class="n">HeldFunc</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">UserClass</span><span class="p">,</span> <span class="k">typename</span> <span class="n">PressedFuncType</span><span class="p">,</span> <span class="k">typename</span> <span class="n">ReleasedFuncType</span><span class="p">,</span> <span class="k">typename</span> <span class="n">HeldFuncType</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraInputComponent</span><span class="o">::</span><span class="n">BindAbilityActions</span><span class="p">(</span><span class="k">const</span> <span class="n">UAuraInputConfig</span><span class="o">*</span> <span class="n">InputConfig</span><span class="p">,</span> <span class="n">UserClass</span><span class="o">*</span> <span class="n">Object</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PressedFuncType</span> <span class="n">PressedFunc</span><span class="p">,</span> <span class="n">ReleasedFuncType</span> <span class="n">ReleasedFunc</span><span class="p">,</span> <span class="n">HeldFuncType</span> <span class="n">HeldFunc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">InputConfig</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">Action</span> <span class="p">:</span> <span class="n">InputConfig</span><span class="o">-&gt;</span><span class="n">AbilityInputActions</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span> <span class="o">&amp;&amp;</span> <span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">.</span><span class="n">IsValid</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="n">PressedFunc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Started</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">PressedFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="n">ReleasedFunc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Completed</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">ReleasedFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="n">HeldFunc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Triggered</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">HeldFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>typename PressedFuncType, typename ReleasedFuncType, typename HeldFuncType</p>
+<p>这3个参数 传入函数时，编译器会自动推导其类型<br/>可以把 &amp;AAuraPlayerController::AbilityInputTagPressed 这样的参数传入进去.</p>
+<hr>
+<p>在玩家控制器里调用这个BindAbilityActions函数， 来绑定GameplayTag和InputAction.</p>
+<p>准备3个输入函数，分别是 Pressed、Released、Held 状态下的输入， 按下、释放、按住.</p>
+<p>并且这3个函数可以接收传来的FGameplayTag InputTag，因为上面的增强输入在绑定时，就可以把参数传到函数里.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Started</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">PressedFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>BindAction的最后两个参数 - PressedFunc函数被调用时，会把Action.InputTag传给这个函数. <br/>所以可以使用AbilityInputTagPressed(FGameplayTag InputTag) 这样的函数 去接收传来的InputTag.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagPressed</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GEngine</span><span class="o">-&gt;</span><span class="n">AddOnScreenDebugMessage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mf">3.f</span><span class="p">,</span><span class="n">FColor</span><span class="o">::</span><span class="n">Red</span><span class="p">,</span><span class="o">*</span><span class="n">InputTag</span><span class="p">.</span><span class="n">ToString</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagReleased</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagHeld</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<p>使用准备好的UAuraInputConfig资产 绑定输入</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">//AuraPlayerController.h	
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Input&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAuraInputConfig</span><span class="o">&gt;</span> <span class="n">InputConfig</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">SetupInputComponent</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">SetupInputComponent</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UAuraInputComponent</span><span class="o">*</span> <span class="n">AuraInputComponent</span> <span class="o">=</span> <span class="n">CastChecked</span><span class="o">&lt;</span><span class="n">UAuraInputComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InputComponent</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AuraInputComponent</span><span class="o">-&gt;</span><span class="n">BindAction</span><span class="p">(</span><span class="n">MoveAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Triggered</span><span class="p">,</span><span class="k">this</span><span class="p">,</span><span class="o">&amp;</span><span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">Move</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AuraInputComponent</span><span class="o">-&gt;</span><span class="n">BindAbilityActions</span><span class="p">(</span><span class="n">InputConfig</span><span class="p">,</span><span class="k">this</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">AbilityInputTagPressed</span><span class="p">,</span><span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">AbilityInputTagReleased</span><span class="p">,</span><span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">AbilityInputTagHeld</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>注意执行输入的参数顺序Press,Released,Held</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraInputComponent</span><span class="o">::</span><span class="n">BindAbilityActions</span><span class="p">(</span><span class="k">const</span> <span class="n">UAuraInputConfig</span><span class="o">*</span> <span class="n">InputConfig</span><span class="p">,</span> <span class="n">UserClass</span><span class="o">*</span> <span class="n">Object</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PressedFuncType</span> <span class="n">PressedFunc</span><span class="p">,</span> <span class="n">ReleasedFuncType</span> <span class="n">ReleasedFunc</span><span class="p">,</span> <span class="n">HeldFuncType</span> <span class="n">HeldFunc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="n">AuraInputComponent</span><span class="o">-&gt;</span><span class="n">BindAbilityActions</span><span class="p">(</span><span class="n">InputConfig</span><span class="p">,</span><span class="k">this</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">AbilityInputTagPressed</span><span class="p">,</span><span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">AbilityInputTagReleased</span><span class="p">,</span><span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">AbilityInputTagHeld</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>现在就把 GameplayTag 和 玩家控制器 里面的函数绑定上了，</p>
+<hr>
+<h4 id="总结">总结
+</h4><p>回顾整个流程，</p>
+<p>1.首先创建了一个资产UAuraInputConfig，这个资产定义了 GameplayTag 和 InputAction 绑定关系，<br/>2.在 玩家控制器 里面，指定了UAuraInputConfig，再调用 增强输入 的函数，使用这个资产进行 GameplayTag和InputAction的绑定.<br/>3.增强输入 利用InputAction绑定一个要执行的函数，按下按键时 执行哪一个函数.<br/>4.绑定完了函数 还不够， 按下按键时执行函数 并且函数还要接收到对应的那个 GameplayTag.<br/></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Started</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">PressedFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Completed</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">ReleasedFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Triggered</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">HeldFunc</span><span class="p">,</span><span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>第4个条件 就是用这个BindAction绑定起来的，<br/>当按下按键时、松开按键时、持续按住按键时、都会把 Action.InputTag 传给对应的 响应函数.</p>
+<p>这样就实现了 按下按键时，还能获得对应按键的GameplayTag.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagPressed</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GEngine</span><span class="o">-&gt;</span><span class="n">AddOnScreenDebugMessage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mf">3.f</span><span class="p">,</span><span class="n">FColor</span><span class="o">::</span><span class="n">Red</span><span class="p">,</span><span class="o">*</span><span class="n">InputTag</span><span class="p">.</span><span class="n">ToString</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这个函数就能接收到 GameplayTag 的值.</p>
+<hr>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">UserClass</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">VarTypes</span><span class="o">&gt;</span>																																					\
+</span></span><span class="line"><span class="cl">	<span class="n">FEnhancedInputActionEventBinding</span><span class="o">&amp;</span> <span class="n">BindAction</span><span class="p">(</span><span class="k">const</span> <span class="n">UInputAction</span><span class="o">*</span> <span class="n">Action</span><span class="p">,</span> <span class="n">ETriggerEvent</span> <span class="n">TriggerEvent</span><span class="p">,</span> <span class="n">UserClass</span><span class="o">*</span> <span class="n">Object</span><span class="p">,</span> <span class="k">typename</span> <span class="n">HANDLER_SIG</span><span class="o">::</span><span class="k">template</span> <span class="n">TMethodPtr</span><span class="o">&lt;</span> <span class="n">UserClass</span><span class="p">,</span> <span class="n">VarTypes</span><span class="p">...</span> <span class="o">&gt;</span> <span class="n">Func</span><span class="p">,</span> <span class="n">VarTypes</span><span class="p">...</span> <span class="n">Vars</span><span class="p">)</span> \
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>																																											\
+</span></span><span class="line"><span class="cl">		<span class="n">TUniquePtr</span><span class="o">&lt;</span><span class="n">FEnhancedInputActionEventDelegateBinding</span><span class="o">&lt;</span><span class="n">HANDLER_SIG</span><span class="o">&gt;&gt;</span> <span class="n">AB</span> <span class="o">=</span> <span class="n">MakeUnique</span><span class="o">&lt;</span><span class="n">FEnhancedInputActionEventDelegateBinding</span><span class="o">&lt;</span><span class="n">HANDLER_SIG</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">TriggerEvent</span><span class="p">);</span>			\
+</span></span><span class="line"><span class="cl">		<span class="n">AB</span><span class="o">-&gt;</span><span class="n">Delegate</span><span class="p">.</span><span class="n">BindDelegate</span><span class="o">&lt;</span><span class="n">UserClass</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Object</span><span class="p">,</span> <span class="n">Func</span><span class="p">,</span> <span class="n">Vars</span><span class="p">...);</span>																														\
+</span></span><span class="line"><span class="cl">		<span class="n">AB</span><span class="o">-&gt;</span><span class="n">Delegate</span><span class="p">.</span><span class="n">SetShouldFireWithEditorScriptGuard</span><span class="p">(</span><span class="n">bShouldFireDelegatesInEditor</span><span class="p">);</span>																							\
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="o">*</span><span class="n">EnhancedActionEventBindings</span><span class="p">.</span><span class="n">Add_GetRef</span><span class="p">(</span><span class="n">MoveTemp</span><span class="p">(</span><span class="n">AB</span><span class="p">));</span>																											\
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这是增强输入里使用的变参模板，应该是可以让按下按键时 触发的那个响应函数 接收任意数量的参数. 随便接.<br/>例如:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">BindAction</span><span class="p">(</span><span class="n">Action</span><span class="p">.</span><span class="n">InputAction</span><span class="p">,</span><span class="n">ETriggerEvent</span><span class="o">::</span><span class="n">Started</span><span class="p">,</span><span class="n">Object</span><span class="p">,</span><span class="n">PressedFunc</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">           <span class="n">Action</span><span class="p">.</span><span class="n">InputTag</span><span class="p">,</span><span class="n">floatA</span><span class="p">,</span><span class="n">floatB</span><span class="p">,</span><span class="n">floatC</span><span class="p">,</span><span class="n">floatD</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">Pressed</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">,</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span><span class="kt">float</span> <span class="n">b</span><span class="p">,</span><span class="kt">float</span> <span class="n">c</span><span class="p">,</span><span class="kt">float</span> <span class="n">d</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h3 id="激活技能">激活技能
+</h3><p>前面的 GameplayAbility 片段，在GA里面定义了一个变量StartupInputTag</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Input&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">FGameplayTag</span> <span class="n">StartupInputTag</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>并且在ASC里面GiveAbility时，把这个StartupInputTag传给 GameplayAbilitySpec 作为动态Tag.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAbilitySystemComponent</span><span class="o">::</span><span class="n">AddCharacterAbility</span><span class="p">(</span><span class="k">const</span> <span class="n">TArray</span><span class="o">&lt;</span><span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UGameplayAbility</span><span class="o">&gt;&gt;&amp;</span> <span class="n">StartupAbility</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="nl">AbilityClass</span> <span class="p">:</span> <span class="n">StartupAbility</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">FGameplayAbilitySpec</span> <span class="n">AbilitySpec</span> <span class="o">=</span> <span class="n">FGameplayAbilitySpec</span><span class="p">(</span><span class="n">AbilityClass</span><span class="p">,</span> <span class="mf">1.0f</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">AuraAbility</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraGameplayAbility</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">.</span><span class="n">Ability</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">AbilitySpec</span><span class="p">.</span><span class="n">GetDynamicSpecSourceTags</span><span class="p">().</span><span class="n">AddTag</span><span class="p">(</span><span class="n">AuraAbility</span><span class="o">-&gt;</span><span class="n">StartupInputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="n">GiveAbility</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>现在 就使用这个Tag条件 作为 <strong>按键输入</strong> 和 <strong>激活技能</strong> 之间的桥梁.</p>
+<p>在ASC里创建下面两个函数，接收一个GameplayTag，按下按键时 就调用这两个函数，激活技能.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAbilitySystemComponent</span><span class="o">::</span><span class="n">AbilityInputHeld</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">InputTag</span><span class="p">.</span><span class="n">IsValid</span><span class="p">())</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TArray</span><span class="o">&lt;</span><span class="n">FGameplayAbilitySpec</span><span class="o">&gt;</span> <span class="n">Abilities</span> <span class="o">=</span> <span class="n">GetActivatableAbilities</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="nl">AbilitySpec</span> <span class="p">:</span> <span class="n">Abilities</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">AbilitySpec</span><span class="p">.</span><span class="n">GetDynamicSpecSourceTags</span><span class="p">().</span><span class="n">HasTagExact</span><span class="p">(</span><span class="n">InputTag</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">AbilitySpecInputPressed</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">AbilitySpec</span><span class="p">.</span><span class="n">IsActive</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">TryActivateAbility</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">.</span><span class="n">Handle</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAbilitySystemComponent</span><span class="o">::</span><span class="n">AbilityInputReleased</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayTag</span><span class="o">&amp;</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">InputTag</span><span class="p">.</span><span class="n">IsValid</span><span class="p">())</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TArray</span><span class="o">&lt;</span><span class="n">FGameplayAbilitySpec</span><span class="o">&gt;</span> <span class="n">Abilities</span> <span class="o">=</span> <span class="n">GetActivatableAbilities</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="nl">AbilitySpec</span> <span class="p">:</span> <span class="n">Abilities</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">AbilitySpec</span><span class="p">.</span><span class="n">GetDynamicSpecSourceTags</span><span class="p">().</span><span class="n">HasTagExact</span><span class="p">(</span><span class="n">InputTag</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">AbilitySpecInputReleased</span><span class="p">(</span><span class="n">AbilitySpec</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<p>玩家控制器 绑定了GameplayTag 和 按键响应的函数， 在按键响应的函数里能够接收到 那个按键对应的GameplayTag， <br/>现在要做的是: 这个接收到的 GameplayTag 只要和某个 GA 的GameplayTag 匹配成功，就激活那个GA.</p>
+<hr>
+<p>按键响应的函数 在玩家控制器里，激活技能需要角色身上的ASC，AbilitySystemComponent<br/>玩家控制器 能够获得角色，从角色身上获得ASC， 好了 这就是思路.</p>
+<p>玩家控制器里面用一个指针存放 ASC，如果ASC有效 就使用存储的ASC，如果无效 则重新获得角色以及ASC.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span> <span class="n">AuraAbilitySystemComponent</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagPressed</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagReleased</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">GetASC</span><span class="p">()</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GetASC</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AbilityInputReleased</span><span class="p">(</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">AbilityInputTagHeld</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">InputTag</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">GetASC</span><span class="p">()</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GetASC</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AbilityInputHeld</span><span class="p">(</span><span class="n">InputTag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UAuraAbilitySystemComponent</span><span class="o">*</span> <span class="n">AAuraPlayerController</span><span class="o">::</span><span class="n">GetASC</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">AuraAbilitySystemComponent</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">AuraAbilitySystemComponent</span> <span class="o">=</span><span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">GetPawn</span><span class="o">&lt;</span><span class="n">APawn</span><span class="o">&gt;</span><span class="p">()));</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">AuraAbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="投射物">投射物
+</h2><p>从人物手上发射一个火球，撞到敌人造成伤害</p>
+<p>前面在 GameplayAbility 这一片段创建了自定义的GA，</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UAuraGameplayAbility</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UGameplayAbility</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Input&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">StartupInputTag</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Damage&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FScalableFloat</span> <span class="n">Damage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GA_Fire.png"
+	width="1824"
+	height="950"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GA_Fire_hu11026645957612134284.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GA_Fire_hu18264194492272088373.png 1024w"
+	loading="lazy"
+	
+		alt="GA_Fire"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="192"
+		data-flex-basis="460px"
+	
+></p>
+<p>一个GA，一个火球Actor.<br/>GA播放角色发射火球的动作蒙太奇，<br/>GA等待GameplayEvent， 当Event触发时 才发射火球，<br/>动画蒙太奇在执行到指定帧时，通过动画通知触发Event，让GA发射火球<br/>GA在生成火球Actor时，把GE传给Actor，Actor撞到敌人，对敌人应用GE 造成伤害，</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraProjectileSpell</span><span class="o">::</span><span class="n">ActivateAbility</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAbilitySpecHandle</span> <span class="n">Handle</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                                           <span class="k">const</span> <span class="n">FGameplayAbilityActorInfo</span><span class="o">*</span> <span class="n">ActorInfo</span><span class="p">,</span> <span class="k">const</span> <span class="n">FGameplayAbilityActivationInfo</span> <span class="n">ActivationInfo</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                                           <span class="k">const</span> <span class="n">FGameplayEventData</span><span class="o">*</span> <span class="n">TriggerEventData</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">ActivateAbility</span><span class="p">(</span><span class="n">Handle</span><span class="p">,</span> <span class="n">ActorInfo</span><span class="p">,</span> <span class="n">ActivationInfo</span><span class="p">,</span> <span class="n">TriggerEventData</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraProjectileSpell</span><span class="o">::</span><span class="n">SpawnProjectile</span><span class="p">(</span><span class="k">const</span> <span class="n">FVector</span><span class="o">&amp;</span> <span class="n">TargetLocation</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AActor</span><span class="o">*</span> <span class="n">AvartarActor</span> <span class="o">=</span> <span class="n">GetAvatarActorFromActorInfo</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">bool</span> <span class="n">bIsServer</span> <span class="o">=</span> <span class="n">AvartarActor</span><span class="o">-&gt;</span><span class="n">HasAuthority</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">bIsServer</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">ICombatInterface</span><span class="o">*</span> <span class="n">CombatInterface</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">ICombatInterface</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AvartarActor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">CombatInterface</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">const</span> <span class="n">FVector</span> <span class="n">SockLocation</span> <span class="o">=</span> <span class="n">CombatInterface</span><span class="o">-&gt;</span><span class="n">GetCombatSocketLocation</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">FRotator</span> <span class="n">Rotation</span> <span class="o">=</span> <span class="p">(</span><span class="n">TargetLocation</span> <span class="o">-</span> <span class="n">SockLocation</span><span class="p">).</span><span class="n">Rotation</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Rotation</span><span class="p">.</span><span class="n">Pitch</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">		<span class="n">AActor</span><span class="o">*</span> <span class="n">OwningActor</span> <span class="o">=</span> <span class="n">GetOwningActorFromActorInfo</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">FTransform</span> <span class="n">SpawnTransform</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SpawnTransform</span><span class="p">.</span><span class="n">SetLocation</span><span class="p">(</span><span class="n">SockLocation</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SpawnTransform</span><span class="p">.</span><span class="n">SetRotation</span><span class="p">(</span><span class="n">Rotation</span><span class="p">.</span><span class="n">Quaternion</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">		<span class="n">AAuraProjectile</span><span class="o">*</span> <span class="n">Projectile</span> <span class="o">=</span> <span class="n">GetWorld</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SpawnActorDeferred</span><span class="o">&lt;</span><span class="n">AAuraProjectile</span><span class="o">&gt;</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">			<span class="n">ProjectileClass</span><span class="p">,</span> <span class="n">SpawnTransform</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">			<span class="n">OwningActor</span><span class="p">,</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">APawn</span><span class="o">&gt;</span><span class="p">(</span><span class="n">OwningActor</span><span class="p">),</span> <span class="n">ESpawnActorCollisionHandlingMethod</span><span class="o">::</span><span class="n">AlwaysSpawn</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">SourceASC</span> <span class="o">=</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">GetAvatarActorFromActorInfo</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">		<span class="n">FGameplayEffectContextHandle</span> <span class="n">Context</span> <span class="o">=</span> <span class="n">SourceASC</span><span class="o">-&gt;</span><span class="n">MakeEffectContext</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">FGameplayEffectSpecHandle</span> <span class="n">SpeceHandle</span> <span class="o">=</span> <span class="n">SourceASC</span><span class="o">-&gt;</span><span class="n">MakeOutgoingSpec</span><span class="p">(</span><span class="n">DamageEffectClass</span><span class="p">,</span> <span class="n">GetAbilityLevel</span><span class="p">(),</span> <span class="n">Context</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="n">FAuraGameplayTags</span> <span class="n">GameplayTags</span> <span class="o">=</span> <span class="n">FAuraGameplayTags</span><span class="o">::</span><span class="n">Get</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">		<span class="k">const</span> <span class="kt">float</span> <span class="n">ScaledDamage</span> <span class="o">=</span> <span class="n">Damage</span><span class="p">.</span><span class="n">GetValueAtLevel</span><span class="p">(</span><span class="n">GetAbilityLevel</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">		<span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">AssignTagSetByCallerMagnitude</span><span class="p">(</span><span class="n">SpeceHandle</span><span class="p">,</span><span class="n">GameplayTags</span><span class="p">.</span><span class="n">Damage</span><span class="p">,</span><span class="n">ScaledDamage</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Projectile</span><span class="o">-&gt;</span><span class="n">DamaeEffectSpecHandle</span> <span class="o">=</span> <span class="n">SpeceHandle</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">		<span class="n">Projectile</span><span class="o">-&gt;</span><span class="n">FinishSpawning</span><span class="p">(</span><span class="n">SpawnTransform</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#4591-setbycaller"  target="_blank" rel="noopener"
+    >SetByCaller - AssignTagSetByCallerMagnitude</a></p>
+<p>SetByCaller，在GA里设置伤害，GE里配置Tag，GA通过Tag把数值传给GE.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UAuraGameplayAbility</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UGameplayAbility</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Input&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayTag</span> <span class="n">StartupInputTag</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditDefaultsOnly</span><span class="p">,</span><span class="n">BlueprintReadOnly</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Damage&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FScalableFloat</span> <span class="n">Damage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GA.png"
+	width="526"
+	height="352"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GA_hu5820679436953999280.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GA_hu3206863623386699757.png 1024w"
+	loading="lazy"
+	
+		alt="GA"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="149"
+		data-flex-basis="358px"
+	
+></p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GE.png"
+	width="1308"
+	height="823"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GE_hu12171750147926769494.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GE_hu18379896672282579502.png 1024w"
+	loading="lazy"
+	
+		alt="GE"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="158"
+		data-flex-basis="381px"
+	
+></p>
+<p>GA能获得AvatarActor，这就是角色，但不直接Cast到玩家角色，而是使用一个接口去做，没有硬绑定为某个具体角色类.<br/>接口的GetCombatSocketLocation函数，只是一个获取骨骼插槽位置的，返回一个Vector. <br/>有起始位置和目标位置 就能设置火球Actor的朝向，让火球对准过去.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraProjectileSpell</span><span class="o">::</span><span class="n">SpawnProjectile</span><span class="p">(</span><span class="k">const</span> <span class="n">FVector</span><span class="o">&amp;</span> <span class="n">TargetLocation</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>TargetLocation是在蓝图里设置的</p>
+<hr>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">FVector</span> <span class="n">AAuraCharacterBase</span><span class="o">::</span><span class="n">GetCombatSocketLocation</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">Weapon</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">Weapon</span><span class="o">-&gt;</span><span class="n">GetSocketLocation</span><span class="p">(</span><span class="n">WeaponTipSocketName</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<p>AuraProjectile.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">AAuraProjectile</span> <span class="p">:</span> <span class="k">public</span> <span class="n">AActor</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>	
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AAuraProjectile</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">VisibleAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UProjectileMovementComponent</span><span class="o">&gt;</span> <span class="n">ProjectileMovement</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span><span class="n">meta</span> <span class="o">=</span> <span class="p">(</span><span class="n">ExposeOnSpawn</span> <span class="o">=</span> <span class="nb">true</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectSpecHandle</span> <span class="n">DamaeEffectSpecHandle</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">protected</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">virtual</span> <span class="kt">void</span> <span class="n">BeginPlay</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="n">OnSphereOverlap</span><span class="p">(</span> <span class="n">UPrimitiveComponent</span><span class="o">*</span> <span class="n">OverlappedComponent</span><span class="p">,</span> <span class="n">AActor</span><span class="o">*</span> <span class="n">OtherActor</span><span class="p">,</span> <span class="n">UPrimitiveComponent</span><span class="o">*</span> <span class="n">OtherComp</span><span class="p">,</span> <span class="n">int32</span> <span class="n">OtherBodyIndex</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">bFromSweep</span><span class="p">,</span> <span class="k">const</span> <span class="n">FHitResult</span> <span class="o">&amp;</span> <span class="n">SweepResult</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="k">private</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="n">LifeSpan</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">VisibleAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">USphereComponent</span><span class="o">&gt;</span> <span class="n">Sphere</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UNiagaraSystem</span><span class="o">&gt;</span> <span class="n">ImpactEffect</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">USoundBase</span><span class="o">&gt;</span> <span class="n">ImpactSound</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">USoundBase</span><span class="o">&gt;</span> <span class="n">LoopingSound</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAudioComponent</span><span class="o">&gt;</span> <span class="n">LoopingSoundComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>AuraProjectile.cpp</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">AAuraProjectile</span><span class="o">::</span><span class="n">AAuraProjectile</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PrimaryActorTick</span><span class="p">.</span><span class="n">bCanEverTick</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">bReplicates</span> <span class="o">=</span><span class="nb">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">USphereComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;Sphere&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">SetRootComponent</span><span class="p">(</span><span class="n">Sphere</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">SetCollisionObjectType</span><span class="p">(</span><span class="n">ECC_Projectile</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">SetCollisionEnabled</span><span class="p">(</span><span class="n">ECollisionEnabled</span><span class="o">::</span><span class="n">QueryOnly</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">SetCollisionResponseToAllChannels</span><span class="p">(</span><span class="n">ECR_Ignore</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">SetCollisionResponseToChannel</span><span class="p">(</span><span class="n">ECC_WorldDynamic</span><span class="p">,</span><span class="n">ECR_Overlap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">SetCollisionResponseToChannel</span><span class="p">(</span><span class="n">ECC_WorldStatic</span><span class="p">,</span><span class="n">ECR_Overlap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">SetCollisionResponseToChannel</span><span class="p">(</span><span class="n">ECC_Pawn</span><span class="p">,</span><span class="n">ECR_Overlap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">ProjectileMovement</span> <span class="o">=</span> <span class="n">CreateDefaultSubobject</span><span class="o">&lt;</span><span class="n">UProjectileMovementComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;ProjectileMovement&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ProjectileMovement</span><span class="o">-&gt;</span><span class="n">InitialSpeed</span> <span class="o">=</span> <span class="mi">550</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ProjectileMovement</span><span class="o">-&gt;</span><span class="n">MaxSpeed</span> <span class="o">=</span> <span class="mi">550</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ProjectileMovement</span><span class="o">-&gt;</span><span class="n">ProjectileGravityScale</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraProjectile</span><span class="o">::</span><span class="n">BeginPlay</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">BeginPlay</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">SetLifeSpan</span><span class="p">(</span><span class="n">LifeSpan</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Sphere</span><span class="o">-&gt;</span><span class="n">OnComponentBeginOverlap</span><span class="p">.</span><span class="n">AddDynamic</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="o">&amp;</span><span class="n">ThisClass</span><span class="o">::</span><span class="n">OnSphereOverlap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">LoopingSoundComponent</span> <span class="o">=</span> <span class="n">UGameplayStatics</span><span class="o">::</span><span class="n">SpawnSoundAttached</span><span class="p">(</span><span class="n">LoopingSound</span><span class="p">,</span><span class="n">GetRootComponent</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraProjectile</span><span class="o">::</span><span class="n">OnSphereOverlap</span><span class="p">(</span><span class="n">UPrimitiveComponent</span><span class="o">*</span> <span class="n">OverlappedComponent</span><span class="p">,</span> <span class="n">AActor</span><span class="o">*</span> <span class="n">OtherActor</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPrimitiveComponent</span><span class="o">*</span> <span class="n">OtherComp</span><span class="p">,</span> <span class="n">int32</span> <span class="n">OtherBodyIndex</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">bFromSweep</span><span class="p">,</span> <span class="k">const</span> <span class="n">FHitResult</span><span class="o">&amp;</span> <span class="n">SweepResult</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UGameplayStatics</span><span class="o">::</span><span class="n">PlaySoundAtLocation</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="n">ImpactSound</span><span class="p">,</span><span class="n">GetActorLocation</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UNiagaraFunctionLibrary</span><span class="o">::</span><span class="n">SpawnSystemAtLocation</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="n">ImpactEffect</span><span class="p">,</span><span class="n">GetActorLocation</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="n">LoopingSoundComponent</span><span class="o">-&gt;</span><span class="n">Stop</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">TargetASC</span> <span class="o">=</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">OtherActor</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">ApplyGameplayEffectSpecToSelf</span><span class="p">(</span><span class="o">*</span><span class="n">DamaeEffectSpecHandle</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">Get</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">Destroy</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="abilitytask">AbilityTask
+</h3><p>技能任务（C++类&quot;UAbilityTask&quot;）是更常规的技能任务类的特殊形式，旨在使用游戏性技能。<br/>使用游戏性技能系统的游戏通常包括各种自定义技能任务，这些任务实施其独特的游戏功能。<br/>它们在游戏性技能执行过程中执行异步工作，并且能够通过调用<a class="link" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/delegates-and-lamba-functions-in-unreal-engine"  target="_blank" rel="noopener"
+    >委托（Delegate）</a> （在本地C++代码中）或移经一个或多个输出执行引脚（在蓝图中）来影响执行流。<br/>这使技能能够跨多个帧执行，并可在同一帧内执行多个不同的函数。<br/>大部分技能任务都有一个即时触发的执行引脚，使蓝图能够在任务开始后继续执行。<br/>此外，通常还有一些特定于任务的引脚，它们会在延迟后或在可能发生或不发生的某个事件之后触发。<br/></p>
+<p>技能任务可以通过调用&quot;EndTask&quot;函数自行终止，或者等待运行它的游戏性技能结束，此时它会自动终止。<br/>这可以防止幻影技能任务运行，有效地泄漏CPU周期和内存。<br/>例如，某个技能任务可能播放一个施法动画，而另一个任务则在玩家的瞄准点处放置一个靶向标线。<br/>如果玩家点击确认输入来施放该法术，或者等待动画结束而未确认该法术，游戏性技能就会结束。<br/>虽然它们可以在任何时候自动终止，但是技能任务保证最晚在主要技能结束时终止。</p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/AbilityTask.png"
+	width="766"
+	height="233"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/AbilityTask_hu14322655802466144313.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/AbilityTask_hu14310963020753680615.png 1024w"
+	loading="lazy"
+	
+		alt="AbilityTask"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="328"
+		data-flex-basis="789px"
+	
+></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam</span><span class="p">(</span><span class="n">FMouseTargetDataSignature</span><span class="p">,</span><span class="k">const</span> <span class="n">FVector</span><span class="o">&amp;</span><span class="p">,</span><span class="n">Data</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AURA_API</span> <span class="nl">UTargetDataUnderMouse</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UAbilityTask</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">(</span><span class="n">BlueprintCallable</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;Ability|Tasks&#34;</span><span class="p">,</span><span class="n">meta</span> <span class="o">=</span> <span class="p">(</span><span class="n">DisplayName</span> <span class="o">=</span> <span class="s">&#34;TargetDataUnderMouse&#34;</span><span class="p">,</span><span class="n">HidePin</span><span class="o">=</span><span class="s">&#34;OwningAbility&#34;</span><span class="p">,</span><span class="n">DefaultToSelf</span> <span class="o">=</span> <span class="s">&#34;OwningAbility&#34;</span><span class="p">,</span><span class="n">BlueprintInternalUseOnly</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="k">static</span> <span class="n">UTargetDataUnderMouse</span><span class="o">*</span> <span class="n">CreateTargetDataUnderMouse</span><span class="p">(</span><span class="n">UGameplayAbility</span><span class="o">*</span> <span class="n">OwningAbility</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintAssignable</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FMouseTargetDataSignature</span> <span class="n">ValidData</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">private</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">virtual</span> <span class="kt">void</span> <span class="n">Activate</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UTargetDataUnderMouse</span><span class="o">*</span> <span class="n">UTargetDataUnderMouse</span><span class="o">::</span><span class="n">CreateTargetDataUnderMouse</span><span class="p">(</span><span class="n">UGameplayAbility</span><span class="o">*</span> <span class="n">OwningAbility</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UTargetDataUnderMouse</span><span class="o">*</span> <span class="n">Myobj</span> <span class="o">=</span> <span class="n">NewAbilityTask</span><span class="o">&lt;</span><span class="n">UTargetDataUnderMouse</span><span class="o">&gt;</span><span class="p">(</span><span class="n">OwningAbility</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">Myobj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UTargetDataUnderMouse</span><span class="o">::</span><span class="n">Activate</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span> <span class="o">=</span> <span class="n">Ability</span><span class="o">-&gt;</span><span class="n">GetCurrentActorInfo</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">PlayerController</span><span class="p">.</span><span class="n">Get</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FHitResult</span> <span class="n">HitResult</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PC</span><span class="o">-&gt;</span><span class="n">GetHitResultUnderCursor</span><span class="p">(</span><span class="n">ECC_Visibility</span><span class="p">,</span><span class="nb">false</span><span class="p">,</span><span class="n">HitResult</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ValidData</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">HitResult</span><span class="p">.</span><span class="n">Location</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>蓝图调用UTargetDataUnderMouse的static函数 创建UTargetDataUnderMouse，创建之后调用Activate函数.</p>
+<hr>
+<p><a class="link" href="https://github.com/fjz13/UnrealSpecifiers/blob/main/Doc/zh/Specifier/UPROPERTY/Blueprint/BlueprintAssignable/BlueprintAssignable.md"  target="_blank" rel="noopener"
+    >BlueprintAssignable</a></p>
+<p>写在AbilityTask.h里的说明:  点击查看大图<br/><a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release"  target="_blank" rel="noopener"
+    >UnrealEngine</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine"  target="_blank" rel="noopener"
+    >Engine</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins"  target="_blank" rel="noopener"
+    >Plugins</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime"  target="_blank" rel="noopener"
+    >Runtime</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime/GameplayAbilities"  target="_blank" rel="noopener"
+    >GameplayAbilities</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime/GameplayAbilities/Source"  target="_blank" rel="noopener"
+    >Source</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities"  target="_blank" rel="noopener"
+    >GameplayAbilities</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public"  target="_blank" rel="noopener"
+    >Public</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/Abilities"  target="_blank" rel="noopener"
+    >Abilities</a>/<a class="link" href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/Abilities/Tasks"  target="_blank" rel="noopener"
+    >Tasks</a></p>
+<p><a class="link" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/Abilities/Tasks/AbilityTask.h"  target="_blank" rel="noopener"
+    >Github上的AbilityTask.h</a></p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/AbilityTaskEx.png"
+	width="1286"
+	height="2342"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/AbilityTaskEx_hu10650309447566870172.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/AbilityTaskEx_hu7176852100845023961.png 1024w"
+	loading="lazy"
+	
+		alt="AbilityTaskEx"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="54"
+		data-flex-basis="131px"
+	
+></p>
+<hr>
+<h3 id="gameplayevent">GameplayEvent
+</h3><p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GameplayEvent1.png"
+	width="1919"
+	height="895"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GameplayEvent1_hu651306520914817001.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GameplayEvent1_hu1538136898385810110.png 1024w"
+	loading="lazy"
+	
+		alt="GameplayEvent"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="214"
+		data-flex-basis="514px"
+	
+></p>
+<p><img src="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GameplayEvent2.png"
+	width="1173"
+	height="635"
+	srcset="/p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GameplayEvent2_hu1325517829148272829.png 480w, /p/gas-a-gega%E8%BE%93%E5%85%A5%E7%BB%91%E5%AE%9A/GameplayEvent2_hu2439690840426415043.png 1024w"
+	loading="lazy"
+	
+		alt="GameplayEvent2"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="184"
+		data-flex-basis="443px"
+	
+></p>
+<ul>
+<li>等待指定的游戏标记事件触发。默认情况下，这将查看此功能的所有者。可以设置 OptionalExternalTarget 以使其查看另一个参与者的标记以进行更改</li>
+<li>只要 OnlyTriggerOnce = false，它就会继续监听</li>
+<li>如果 OnlyMatchExact = false，它将触发嵌套标记</li>
+</ul>
+<hr>
+<p>WaitGameplayEvent与ASC有关. 或许 ASC就是连接Send和Wait之间的桥梁. 所以在动画通知里要GetOwnerActor 给Owner发Event.</p>
+<p>SendGameplayEventToActor</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">SendGameplayEventToActor</span><span class="p">(</span><span class="n">AActor</span><span class="o">*</span> <span class="n">Actor</span><span class="p">,</span> <span class="n">FGameplayTag</span> <span class="n">EventTag</span><span class="p">,</span> <span class="n">FGameplayEventData</span> <span class="n">Payload</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">::</span><span class="n">IsValid</span><span class="p">(</span><span class="n">Actor</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">Actor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">AbilitySystemComponent</span> <span class="o">!=</span> <span class="k">nullptr</span> <span class="o">&amp;&amp;</span> <span class="n">IsValidChecked</span><span class="p">(</span><span class="n">AbilitySystemComponent</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">using</span> <span class="k">namespace</span> <span class="n">UE</span><span class="o">::</span><span class="n">AbilitySystem</span><span class="o">::</span><span class="n">Private</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="n">EnumHasAnyFlags</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">EAllowPredictiveGEFlags</span><span class="o">&gt;</span><span class="p">(</span><span class="n">CVarAllowPredictiveGEFlagsValue</span><span class="p">),</span> <span class="n">EAllowPredictiveGEFlags</span><span class="o">::</span><span class="n">AllowGameplayEventToApplyGE</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">FScopedPredictionWindow</span> <span class="nf">NewScopedWindow</span><span class="p">(</span><span class="n">AbilitySystemComponent</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">				<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">HandleGameplayEvent</span><span class="p">(</span><span class="n">EventTag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Payload</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="k">else</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">HandleGameplayEvent</span><span class="p">(</span><span class="n">EventTag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Payload</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">else</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">ABILITY_LOG</span><span class="p">(</span><span class="n">Error</span><span class="p">,</span> <span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;UAbilitySystemBlueprintLibrary::SendGameplayEventToActor: Invalid ability system component retrieved from Actor %s. EventTag was %s&#34;</span><span class="p">),</span> <span class="o">*</span><span class="n">Actor</span><span class="o">-&gt;</span><span class="n">GetName</span><span class="p">(),</span> <span class="o">*</span><span class="n">EventTag</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在HandleGameplayEvent里面 引用到一个AbilitySystemComponent里面的变量 GenericGameplayEventCallbacks</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">int32</span> <span class="n">UAbilitySystemComponent</span><span class="o">::</span><span class="n">HandleGameplayEvent</span><span class="p">(</span><span class="n">FGameplayTag</span> <span class="n">EventTag</span><span class="p">,</span> <span class="k">const</span> <span class="n">FGameplayEventData</span><span class="o">*</span> <span class="n">Payload</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">int32</span> <span class="n">TriggeredCount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">FGameplayTag</span> <span class="n">CurrentTag</span> <span class="o">=</span> <span class="n">EventTag</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ABILITYLIST_SCOPE_LOCK</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">   <span class="c1">// 省略
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">FGameplayEventMulticastDelegate</span><span class="o">*</span> <span class="n">Delegate</span> <span class="o">=</span> <span class="n">GenericGameplayEventCallbacks</span><span class="p">.</span><span class="n">Find</span><span class="p">(</span><span class="n">EventTag</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">       <span class="c1">// Make a copy before broadcasting to prevent memory stomping
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>       <span class="n">FGameplayEventMulticastDelegate</span> <span class="n">DelegateCopy</span> <span class="o">=</span> <span class="o">*</span><span class="n">Delegate</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">       <span class="n">DelegateCopy</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Payload</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">   <span class="c1">// 省略
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">TriggeredCount</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>AbilityTask_WaitGameplayEvent</p>
+<p>这里面就用到了上面提到的变量 GenericGameplayEventCallbacks</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAbilityTask_WaitGameplayEvent</span><span class="o">::</span><span class="n">Activate</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span> <span class="o">=</span> <span class="n">GetTargetASC</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">ASC</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">OnlyMatchExact</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">MyHandle</span> <span class="o">=</span> <span class="n">ASC</span><span class="o">-&gt;</span><span class="n">GenericGameplayEventCallbacks</span><span class="p">.</span><span class="n">FindOrAdd</span><span class="p">(</span><span class="n">Tag</span><span class="p">).</span><span class="n">AddUObject</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">UAbilityTask_WaitGameplayEvent</span><span class="o">::</span><span class="n">GameplayEventCallback</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">else</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">MyHandle</span> <span class="o">=</span> <span class="n">ASC</span><span class="o">-&gt;</span><span class="n">AddGameplayEventTagContainerDelegate</span><span class="p">(</span><span class="n">FGameplayTagContainer</span><span class="p">(</span><span class="n">Tag</span><span class="p">),</span> <span class="n">FGameplayEventTagMulticastDelegate</span><span class="o">::</span><span class="n">FDelegate</span><span class="o">::</span><span class="n">CreateUObject</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">UAbilityTask_WaitGameplayEvent</span><span class="o">::</span><span class="n">GameplayEventContainerCallback</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>	
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">Activate</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAbilityTask_WaitGameplayEvent</span><span class="o">::</span><span class="n">OnDestroy</span><span class="p">(</span><span class="kt">bool</span> <span class="n">AbilityEnding</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span> <span class="o">=</span> <span class="n">GetTargetASC</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">ASC</span> <span class="o">&amp;&amp;</span> <span class="n">MyHandle</span><span class="p">.</span><span class="n">IsValid</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">OnlyMatchExact</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">ASC</span><span class="o">-&gt;</span><span class="n">GenericGameplayEventCallbacks</span><span class="p">.</span><span class="n">FindOrAdd</span><span class="p">(</span><span class="n">Tag</span><span class="p">).</span><span class="n">Remove</span><span class="p">(</span><span class="n">MyHandle</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">else</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">ASC</span><span class="o">-&gt;</span><span class="n">RemoveGameplayEventTagContainerDelegate</span><span class="p">(</span><span class="n">FGameplayTagContainer</span><span class="p">(</span><span class="n">Tag</span><span class="p">),</span> <span class="n">MyHandle</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">OnDestroy</span><span class="p">(</span><span class="n">AbilityEnding</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>大胆猜想，GamepalyEvent就是ASC运作的<br/>WaitGameplayEvent 把要监听的GameplayTag发给ASC，<br/>当SendGameplayEvent给ASC发送Tag时，如果监听的和接收到的Tag一样，ASC就会激活触发GameplayTagEvent，</p>
+<hr>
+<h2 id="使用数据表初始化敌人属性">使用数据表初始化敌人属性
+</h2><p><a class="link" href="https://blog.csdn.net/qq_30100043/article/details/138304533"  target="_blank" rel="noopener"
+    >不想写了，看别人写的吧</a></p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            国窖1573 - 
+        
+        2025 AKaKLya
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.29.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
