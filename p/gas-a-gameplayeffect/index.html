@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="官方文档 Git文档 GameplayEffect 函数名称 用途 PreAttributeChange / PreAttributeBaseChange 这些函数在即将修改属性之前调用。函数旨在实施关于属性值的规则，例如，&ldquo;生命值必须介于0和最大生命值&quot;之间，并且不得对属性更改触发游戏内响应。 PreGameplayEffectExecute 在即将修改属性值之前，此函数可以拒绝或更改拟定修改。 PostGameplayEffectExecute 在修改属性值后，此函数可立即对更改做出响应。这通常包括限制属性的最终值或触发对新值的游戏内响应，例如当&quot;生命值&quot;属性降至零时死亡。 Gameplay效果组件 说明 UChanceToApplyGameplayEffectComponent 应用Gameplay效果的概率。 UBlockAbilityTagsGameplayEffectComponent 根据所有者Gameplay效果目标Actor的Gameplay标签，进行Gameplay技能激活阻止处理。 UAssetTagsGameplayEffectComponent Gameplay效果资产拥有的标签。这些标签 不会 转移到Actor。 UAdditionalEffectsGameplayEffectComponent 添加尝试在特定条件下激活（或任何条件下都不激活）的其他Gameplay效果。 UTargetTagsGameplayEffectComponent 将标签授予Gameplay效果的目标（有时指所有者）。 UTargetTagRequirementsGameplayEffectComponent 指定如果此GE须应用或继续执行，目标（Gameplay效果的拥有者）必须具备的标签要求。 URemoveOtherGameplayEffectComponent 基于某些条件移除其他Gameplay效果。 UCustomCanApplyGameplayEffectComponent 处理CustomApplicationRequirement函数的配置，以查看是否应该应用此Gameplay效果。 UImmunityGameplayEffectComponent 免疫会阻止其他GameplayEffectSpecs的应用。 新版本的GE效果组件 Abilities Gameplay Effect component 这个组件主要是在GameplayEffect激活时，可以向目标添加的GameplayAbility Addtional Effects Gameplay Effect Component 当此效果添加时或完成时，需要额外添加的效果。 On Appliaciton Gameplay Effects 在添加此效果时，额外添加的效果 On Complete Always 当此效果完成时，不管正常结束还是不正常结束时，添加的效果 On Complete Normal 当此效果正常结束时，添加的额外的效果 On Complete Prematurely 当此效果提前结束时，添加的额外的效果 Gameplay效果组件 说明 Asset Tags Gameplay Effect Component 在添加此GE时，需要额外处理的标签（添加 和 删除），这个标签将放置在GE上面，只是作为一个GE的标记 Block Ability Tags Gameplay Component 添加或删除能够阻挡技能的Tags的组件，这些Tags会在GE运行时添加到Actor身上，用于阻挡其它拥有此Tag的GE或者GA的激活。 Chance to Apply Gameplay Effect Component 当前GE应用到Actor身上的几率，0为百分之0几率，1为百分之百几率 Custom Can Apply Gameplay Effect Component 自定义能够应用GE的组件，可以自定义条件来设置应用是否成功。 Immunity Gameplay Effect Component 配置角色免疫其它GE的条件 Remove Other Gameplay Effect Component 配置移除其它的GE，满足设置的标签或者资源满足条件的GE都会被移除掉。 Target Tag Requirements Gameplay Effect Component 根据目标的Tag设置当前的GE的状态Appliaction 为GE添加到目标身上时Tag的状态Ongoing 为GE激活时Tag的状态Removal 为GE被删除时Tag的状态 Target Tags Gameplay Effect Component 添加此GE后，对Actor身上带有的Tag进行操作（添加或删除），这个会随着GE的添加修改，在GE失效时移除。非Instant使用。 GameplayEffectSpec GameplayEffectSpec(GESpec)可以看作是GameplayEffect的实例, 它保存了一个其所代表的GameplayEffect类引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像GameplayEffect应该由设计师在运行前创建.">
+<title>GAS A - GameplayEffect</title>
+
+<link rel='canonical' href='https://akaklya.github.io/p/gas-a-gameplayeffect/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - GameplayEffect">
+<meta property='og:description' content="官方文档 Git文档 GameplayEffect 函数名称 用途 PreAttributeChange / PreAttributeBaseChange 这些函数在即将修改属性之前调用。函数旨在实施关于属性值的规则，例如，&ldquo;生命值必须介于0和最大生命值&quot;之间，并且不得对属性更改触发游戏内响应。 PreGameplayEffectExecute 在即将修改属性值之前，此函数可以拒绝或更改拟定修改。 PostGameplayEffectExecute 在修改属性值后，此函数可立即对更改做出响应。这通常包括限制属性的最终值或触发对新值的游戏内响应，例如当&quot;生命值&quot;属性降至零时死亡。 Gameplay效果组件 说明 UChanceToApplyGameplayEffectComponent 应用Gameplay效果的概率。 UBlockAbilityTagsGameplayEffectComponent 根据所有者Gameplay效果目标Actor的Gameplay标签，进行Gameplay技能激活阻止处理。 UAssetTagsGameplayEffectComponent Gameplay效果资产拥有的标签。这些标签 不会 转移到Actor。 UAdditionalEffectsGameplayEffectComponent 添加尝试在特定条件下激活（或任何条件下都不激活）的其他Gameplay效果。 UTargetTagsGameplayEffectComponent 将标签授予Gameplay效果的目标（有时指所有者）。 UTargetTagRequirementsGameplayEffectComponent 指定如果此GE须应用或继续执行，目标（Gameplay效果的拥有者）必须具备的标签要求。 URemoveOtherGameplayEffectComponent 基于某些条件移除其他Gameplay效果。 UCustomCanApplyGameplayEffectComponent 处理CustomApplicationRequirement函数的配置，以查看是否应该应用此Gameplay效果。 UImmunityGameplayEffectComponent 免疫会阻止其他GameplayEffectSpecs的应用。 新版本的GE效果组件 Abilities Gameplay Effect component 这个组件主要是在GameplayEffect激活时，可以向目标添加的GameplayAbility Addtional Effects Gameplay Effect Component 当此效果添加时或完成时，需要额外添加的效果。 On Appliaciton Gameplay Effects 在添加此效果时，额外添加的效果 On Complete Always 当此效果完成时，不管正常结束还是不正常结束时，添加的效果 On Complete Normal 当此效果正常结束时，添加的额外的效果 On Complete Prematurely 当此效果提前结束时，添加的额外的效果 Gameplay效果组件 说明 Asset Tags Gameplay Effect Component 在添加此GE时，需要额外处理的标签（添加 和 删除），这个标签将放置在GE上面，只是作为一个GE的标记 Block Ability Tags Gameplay Component 添加或删除能够阻挡技能的Tags的组件，这些Tags会在GE运行时添加到Actor身上，用于阻挡其它拥有此Tag的GE或者GA的激活。 Chance to Apply Gameplay Effect Component 当前GE应用到Actor身上的几率，0为百分之0几率，1为百分之百几率 Custom Can Apply Gameplay Effect Component 自定义能够应用GE的组件，可以自定义条件来设置应用是否成功。 Immunity Gameplay Effect Component 配置角色免疫其它GE的条件 Remove Other Gameplay Effect Component 配置移除其它的GE，满足设置的标签或者资源满足条件的GE都会被移除掉。 Target Tag Requirements Gameplay Effect Component 根据目标的Tag设置当前的GE的状态Appliaction 为GE添加到目标身上时Tag的状态Ongoing 为GE激活时Tag的状态Removal 为GE被删除时Tag的状态 Target Tags Gameplay Effect Component 添加此GE后，对Actor身上带有的Tag进行操作（添加或删除），这个会随着GE的添加修改，在GE失效时移除。非Instant使用。 GameplayEffectSpec GameplayEffectSpec(GESpec)可以看作是GameplayEffect的实例, 它保存了一个其所代表的GameplayEffect类引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像GameplayEffect应该由设计师在运行前创建.">
+<meta property='og:url' content='https://akaklya.github.io/p/gas-a-gameplayeffect/'>
+<meta property='og:site_name' content='AKaKLya'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-11T11:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-11T11:59:56&#43;08:00'/>
+<meta name="twitter:title" content="GAS A - GameplayEffect">
+<meta name="twitter:description" content="官方文档 Git文档 GameplayEffect 函数名称 用途 PreAttributeChange / PreAttributeBaseChange 这些函数在即将修改属性之前调用。函数旨在实施关于属性值的规则，例如，&ldquo;生命值必须介于0和最大生命值&quot;之间，并且不得对属性更改触发游戏内响应。 PreGameplayEffectExecute 在即将修改属性值之前，此函数可以拒绝或更改拟定修改。 PostGameplayEffectExecute 在修改属性值后，此函数可立即对更改做出响应。这通常包括限制属性的最终值或触发对新值的游戏内响应，例如当&quot;生命值&quot;属性降至零时死亡。 Gameplay效果组件 说明 UChanceToApplyGameplayEffectComponent 应用Gameplay效果的概率。 UBlockAbilityTagsGameplayEffectComponent 根据所有者Gameplay效果目标Actor的Gameplay标签，进行Gameplay技能激活阻止处理。 UAssetTagsGameplayEffectComponent Gameplay效果资产拥有的标签。这些标签 不会 转移到Actor。 UAdditionalEffectsGameplayEffectComponent 添加尝试在特定条件下激活（或任何条件下都不激活）的其他Gameplay效果。 UTargetTagsGameplayEffectComponent 将标签授予Gameplay效果的目标（有时指所有者）。 UTargetTagRequirementsGameplayEffectComponent 指定如果此GE须应用或继续执行，目标（Gameplay效果的拥有者）必须具备的标签要求。 URemoveOtherGameplayEffectComponent 基于某些条件移除其他Gameplay效果。 UCustomCanApplyGameplayEffectComponent 处理CustomApplicationRequirement函数的配置，以查看是否应该应用此Gameplay效果。 UImmunityGameplayEffectComponent 免疫会阻止其他GameplayEffectSpecs的应用。 新版本的GE效果组件 Abilities Gameplay Effect component 这个组件主要是在GameplayEffect激活时，可以向目标添加的GameplayAbility Addtional Effects Gameplay Effect Component 当此效果添加时或完成时，需要额外添加的效果。 On Appliaciton Gameplay Effects 在添加此效果时，额外添加的效果 On Complete Always 当此效果完成时，不管正常结束还是不正常结束时，添加的效果 On Complete Normal 当此效果正常结束时，添加的额外的效果 On Complete Prematurely 当此效果提前结束时，添加的额外的效果 Gameplay效果组件 说明 Asset Tags Gameplay Effect Component 在添加此GE时，需要额外处理的标签（添加 和 删除），这个标签将放置在GE上面，只是作为一个GE的标记 Block Ability Tags Gameplay Component 添加或删除能够阻挡技能的Tags的组件，这些Tags会在GE运行时添加到Actor身上，用于阻挡其它拥有此Tag的GE或者GA的激活。 Chance to Apply Gameplay Effect Component 当前GE应用到Actor身上的几率，0为百分之0几率，1为百分之百几率 Custom Can Apply Gameplay Effect Component 自定义能够应用GE的组件，可以自定义条件来设置应用是否成功。 Immunity Gameplay Effect Component 配置角色免疫其它GE的条件 Remove Other Gameplay Effect Component 配置移除其它的GE，满足设置的标签或者资源满足条件的GE都会被移除掉。 Target Tag Requirements Gameplay Effect Component 根据目标的Tag设置当前的GE的状态Appliaction 为GE添加到目标身上时Tag的状态Ongoing 为GE激活时Tag的状态Removal 为GE被删除时Tag的状态 Target Tags Gameplay Effect Component 添加此GE后，对Actor身上带有的Tag进行操作（添加或删除），这个会随着GE的添加修改，在GE失效时移除。非Instant使用。 GameplayEffectSpec GameplayEffectSpec(GESpec)可以看作是GameplayEffect的实例, 它保存了一个其所代表的GameplayEffect类引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像GameplayEffect应该由设计师在运行前创建.">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/d_hu15622052934649275245.jpg" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🍥</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">AKaKLya</a></h1>
+            <h2 class="site-description">点击</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#gameplayeffect">GameplayEffect</a></li>
+    <li><a href="#gameplayeffectspec">GameplayEffectSpec</a></li>
+    <li><a href="#stack堆栈">Stack堆栈</a></li>
+    <li><a href="#infinite-ge的添加移除">Infinite GE的添加、移除</a></li>
+    <li><a href="#数值的限制-与-响应">数值的限制 与 响应</a>
+      <ol>
+        <li><a href="#preattributechange">PreAttributeChange</a></li>
+        <li><a href="#postgameplayeffectexecute">PostGameplayEffectExecute</a></li>
+      </ol>
+    </li>
+    <li><a href="#fgameplayeffectmodcallbackdata">FGameplayEffectModCallbackData</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/gas-a-gameplayeffect/">GAS A - GameplayEffect</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 11, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p><a class="link" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-effects-for-the-gameplay-ability-system-in-unreal-engine"  target="_blank" rel="noopener"
+    >官方文档</a></p>
+<p><a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#45-gameplay-effects"  target="_blank" rel="noopener"
+    >Git文档</a></p>
+<h2 id="gameplayeffect">GameplayEffect
+</h2><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>函数名称</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PreAttributeChange / PreAttributeBaseChange</td>
+<td>这些函数在即将修改属性之前调用。函数旨在实施关于属性值的规则，例如，&ldquo;生命值必须介于0和最大生命值&quot;之间，并且不得对属性更改触发游戏内响应。</td>
+</tr>
+<tr>
+<td>PreGameplayEffectExecute</td>
+<td>在即将修改属性值之前，此函数可以拒绝或更改拟定修改。</td>
+</tr>
+<tr>
+<td>PostGameplayEffectExecute</td>
+<td>在修改属性值后，此函数可立即对更改做出响应。这通常包括限制属性的最终值或触发对新值的游戏内响应，例如当&quot;生命值&quot;属性降至零时死亡。</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th><strong>Gameplay效果组件</strong></th>
+<th><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UChanceToApplyGameplayEffectComponent</td>
+<td>应用Gameplay效果的概率。</td>
+</tr>
+<tr>
+<td>UBlockAbilityTagsGameplayEffectComponent</td>
+<td>根据所有者Gameplay效果目标Actor的Gameplay标签，进行Gameplay技能激活阻止处理。</td>
+</tr>
+<tr>
+<td>UAssetTagsGameplayEffectComponent</td>
+<td>Gameplay效果资产拥有的标签。这些标签 <em>不会</em> 转移到Actor。</td>
+</tr>
+<tr>
+<td>UAdditionalEffectsGameplayEffectComponent</td>
+<td>添加尝试在特定条件下激活（或任何条件下都不激活）的其他Gameplay效果。</td>
+</tr>
+<tr>
+<td>UTargetTagsGameplayEffectComponent</td>
+<td>将标签授予Gameplay效果的目标（有时指所有者）。</td>
+</tr>
+<tr>
+<td>UTargetTagRequirementsGameplayEffectComponent</td>
+<td>指定如果此GE须应用或继续执行，目标（Gameplay效果的拥有者）必须具备的标签要求。</td>
+</tr>
+<tr>
+<td>URemoveOtherGameplayEffectComponent</td>
+<td>基于某些条件移除其他Gameplay效果。</td>
+</tr>
+<tr>
+<td>UCustomCanApplyGameplayEffectComponent</td>
+<td>处理CustomApplicationRequirement函数的配置，以查看是否应该应用此Gameplay效果。</td>
+</tr>
+<tr>
+<td>UImmunityGameplayEffectComponent</td>
+<td>免疫会阻止其他GameplayEffectSpecs的应用。</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<p>新版本的GE效果组件</p>
+<p><strong>Abilities Gameplay Effect component</strong><br/>
+这个组件主要是在GameplayEffect激活时，可以向目标添加的GameplayAbility<br/></p>
+<p>Addtional Effects Gameplay Effect Component<br/>
+当此效果添加时或完成时，需要额外添加的效果。<br/>
+On Appliaciton Gameplay Effects 在添加此效果时，额外添加的效果<br/>
+On Complete Always 当此效果完成时，不管正常结束还是不正常结束时，添加的效果<br/>
+On Complete Normal 当此效果正常结束时，添加的额外的效果<br/>
+On Complete Prematurely 当此效果提前结束时，添加的额外的效果<br/></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>Gameplay效果组件</strong></th>
+<th style="text-align:left"><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Asset Tags Gameplay Effect Component</td>
+<td style="text-align:left">在添加此GE时，需要额外处理的标签（添加 和 删除），这个标签将放置在GE上面，只是作为一个GE的标记</td>
+</tr>
+<tr>
+<td style="text-align:left">Block Ability Tags Gameplay Component</td>
+<td style="text-align:left">添加或删除能够阻挡技能的Tags的组件，这些Tags会在GE运行时添加到Actor身上，用于阻挡其它拥有此Tag的GE或者GA的激活。</td>
+</tr>
+<tr>
+<td style="text-align:left">Chance to Apply Gameplay Effect Component</td>
+<td style="text-align:left">当前GE应用到Actor身上的几率，0为百分之0几率，1为百分之百几率</td>
+</tr>
+<tr>
+<td style="text-align:left">Custom Can Apply Gameplay Effect Component</td>
+<td style="text-align:left">自定义能够应用GE的组件，可以自定义条件来设置应用是否成功。</td>
+</tr>
+<tr>
+<td style="text-align:left">Immunity Gameplay Effect Component</td>
+<td style="text-align:left">配置角色免疫其它GE的条件</td>
+</tr>
+<tr>
+<td style="text-align:left">Remove Other Gameplay Effect Component</td>
+<td style="text-align:left">配置移除其它的GE，满足设置的标签或者资源满足条件的GE都会被移除掉。</td>
+</tr>
+<tr>
+<td style="text-align:left">Target Tag Requirements Gameplay Effect Component</td>
+<td style="text-align:left">根据目标的Tag设置当前的GE的状态<br/>Appliaction 为GE添加到目标身上时Tag的状态<br/>Ongoing 为GE激活时Tag的状态<br/>Removal 为GE被删除时Tag的状态</td>
+</tr>
+<tr>
+<td style="text-align:left">Target Tags Gameplay Effect Component</td>
+<td style="text-align:left">添加此GE后，对Actor身上带有的Tag进行操作（添加或删除），这个会随着GE的添加修改，在GE失效时移除。非Instant使用。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="gameplayeffectspec">GameplayEffectSpec
+</h2><hr>
+<p><a class="link" href="https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/FGameplayEffectSpec/index.html"  target="_blank" rel="noopener"
+    >GameplayEffectSpec(GESpec)</a>可以看作是<code>GameplayEffect</code>的实例, 它保存了一个其所代表的<code>GameplayEffect</code>类引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像<code>GameplayEffect</code>应该由设计师在运行前创建. 当应用<code>GameplayEffect</code>时, <code>GameplayEffectSpec</code>会自<code>GameplayEffect</code>创建并且会实际应用到目标(Target).</p>
+<p><code>GameplayEffectSpec</code>是由<code>UAbilitySystemComponent::MakeOutgoingSpec()(BlueprintCallable)</code>自<code>GameplayEffect</code>创建的. <code>GameplayEffectSpec</code>不必立即应用. <strong>通常是将<code>GameplayEffectSpec</code>传递给创建自Ability的投掷物, 该投掷物可以应用到它之后击中的目标</strong>. 当<code>GameplayEffectSpec</code>成功应用后, 就会返回一个名为<code>FActiveGameplayEffect</code>的新结构体.</p>
+<p><code>GameplayEffectSpec</code>的重要内容:</p>
+<ul>
+<li>创建该<code>GameplayEffectSpec</code>的<code>GameplayEffect</code>类.</li>
+<li>该<code>GameplayEffectSpec</code>的等级. 通常和创建<code>GameplayEffectSpec</code>的Ability的等级一样, 但是可以是不同的.</li>
+<li><code>GameplayEffectSpec</code>的持续时间. 默认是<code>GameplayEffect</code>的持续时间, 但是可以是不同的.</li>
+<li>对于周期性Effect中<code>GameplayEffectSpec</code>的周期, 默认是<code>GameplayEffect</code>的周期, 但是可以是不同的.</li>
+<li>该<code>GameplayEffectSpec</code>的当前堆栈数. 堆栈限制取决于<code>GameplayEffect</code>.</li>
+<li><a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-ge-context"  target="_blank" rel="noopener"
+    >GameplayEffectContextHandle</a>表明该<code>GameplayEffectSpec</code>由谁创建.</li>
+<li><code>Attribute</code>在<code>GameplayEffectSpec</code>创建时由Snapshot捕获.</li>
+<li>除了<code>GameplayEffect</code>授予的<code>GameplayTags</code>, <code>GameplayEffectSpec</code>还会授予目标(Target)<code>DynamicGrantedTags</code>.</li>
+<li>除了<code>GameplayEffect</code>拥有的<code>AssetTags</code>, <code>GameplayEffectSpec</code>还会拥有<code>DynamicAssetTags</code>.</li>
+<li><code>SetByCaller TMaps</code>.</li>
+</ul>
+<hr>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraEffectActor</span><span class="o">::</span><span class="n">ApplyEffectToTarget</span><span class="p">(</span><span class="n">AActor</span><span class="o">*</span> <span class="n">TargetActor</span><span class="p">,</span> <span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UGameplayEffect</span><span class="o">&gt;</span> <span class="n">GameplayEffectClass</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">TargetASC</span> <span class="o">=</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">TargetActor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">TargetASC</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span><span class="p">;}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">GameplayEffectClass</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectContextHandle</span> <span class="n">GameplayEffectContext</span> <span class="o">=</span> <span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">MakeEffectContext</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayEffectContext</span><span class="p">.</span><span class="n">AddSourceObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectSpecHandle</span> <span class="n">EffectSpecHandle</span> <span class="o">=</span> <span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">MakeOutgoingSpec</span><span class="p">(</span><span class="n">GameplayEffectClass</span><span class="p">,</span> <span class="n">ActorLevel</span><span class="p">,</span> <span class="n">GameplayEffectContext</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FActiveGameplayEffectHandle</span> <span class="n">ActiveEffectHandle</span> <span class="o">=</span> <span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">ApplyGameplayEffectSpecToSelf</span><span class="p">(</span><span class="o">*</span><span class="n">EffectSpecHandle</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">Get</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="stack堆栈">Stack堆栈
+</h2><hr>
+<p><code>GameplayEffect</code>默认会应用新的<code>GameplayEffectSpec</code>实例, 而不明确或不关心之前已经应用过的尚且存在的<code>GameplayEffectSpec</code>实例. <code>GameplayEffect</code>可以设置到堆栈中, 新的<code>GameplayEffectSpec</code>实例不会添加到堆栈中, 而是修改当前已经存在的<code>GameplayEffectSpec</code>堆栈数. 堆栈只适用于<code>持续(Duration)</code>和<code>无限(Infinite)GameplayEffect</code>.</p>
+<p><em><strong>Source就是AbilitySystemComponent</strong></em></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>堆栈类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aggregate by Source</td>
+<td>目标(Target)上的每个源(Source)<code>ASC</code>都有一个单独的堆栈实例, 每个源(Source)可以应用堆栈中的X个<code>GameplayEffect</code>.</td>
+</tr>
+<tr>
+<td>Aggregate by Target</td>
+<td>目标(Target)上只有一个堆栈实例而不管源(Source)如何, 每个源(Source)都可以在共享堆栈限制(Shared Stack Limit)内应用堆栈.</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<p><img src="/p/gas-a-gameplayeffect/Stack_1.png"
+	width="1547"
+	height="767"
+	srcset="/p/gas-a-gameplayeffect/Stack_1_hu12855095754833307212.png 480w, /p/gas-a-gameplayeffect/Stack_1_hu11276965161434373438.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="201"
+		data-flex-basis="484px"
+	
+></p>
+<p>By Source ，每个Source对象拥有一个计数，计数达到限制时 不能再对Target应用GE.<br/>Source1的Stack达到2后，再次应用会失效.  <br/>这时再起一个Source2对象 就可以应用GE，因为它的Stack没有达到限制<br/></p>
+<p><img src="/p/gas-a-gameplayeffect/Stack_2.png"
+	width="1563"
+	height="734"
+	srcset="/p/gas-a-gameplayeffect/Stack_2_hu11483926641387438620.png 480w, /p/gas-a-gameplayeffect/Stack_2_hu1367629773459728486.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="212"
+		data-flex-basis="511px"
+	
+></p>
+<p>By Target，只要Target的Stack达到限制，不管有多少个Source 都不能对Target应用GE.</p>
+<p><a class="link" href="https://blog.csdn.net/qq_30100043/article/details/135954277"  target="_blank" rel="noopener"
+    >详细解释</a></p>
+<hr>
+<p><img src="/p/gas-a-gameplayeffect/Stack_3.png"
+	width="970"
+	height="682"
+	srcset="/p/gas-a-gameplayeffect/Stack_3_hu5922133127915779465.png 480w, /p/gas-a-gameplayeffect/Stack_3_hu3576791353212474751.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="142"
+		data-flex-basis="341px"
+	
+>
+————————————————</p>
+<hr>
+<h2 id="infinite-ge的添加移除">Infinite GE的添加、移除
+</h2><p>当<code>GameplayEffectSpec</code>成功应用后, 就会返回一个<code>FActiveGameplayEffectHandle</code>.</p>
+<p>在应用GESpec后，把TargetASC和GEHandle加入到Map里<br/>这是针对区域效果的操作，如果有2个玩家进入伤害区域，在他们离开区域时 要通过 &lt;离开的Acotr&gt; 这个条件去Map寻找他对应的GEHandle，从而根据GEHandle移除他身上的GE.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">TMap</span><span class="o">&lt;</span><span class="n">FActiveGameplayEffectHandle</span><span class="p">,</span><span class="n">UAbilitySystemComponent</span><span class="o">*&gt;</span> <span class="n">ActiveEffectHandls</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraEffectActor</span><span class="o">::</span><span class="n">ApplyEffectToTarget</span><span class="p">(</span><span class="n">AActor</span><span class="o">*</span> <span class="n">TargetActor</span><span class="p">,</span> <span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UGameplayEffect</span><span class="o">&gt;</span> <span class="n">GameplayEffectClass</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">TargetASC</span> <span class="o">=</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">TargetActor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">TargetASC</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span><span class="p">;}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">GameplayEffectClass</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectContextHandle</span> <span class="n">GameplayEffectContext</span> <span class="o">=</span> <span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">MakeEffectContext</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GameplayEffectContext</span><span class="p">.</span><span class="n">AddSourceObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectSpecHandle</span> <span class="n">EffectSpecHandle</span> <span class="o">=</span> <span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">MakeOutgoingSpec</span><span class="p">(</span><span class="n">GameplayEffectClass</span><span class="p">,</span> <span class="n">ActorLevel</span><span class="p">,</span> <span class="n">GameplayEffectContext</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FActiveGameplayEffectHandle</span> <span class="n">ActiveEffectHandle</span> <span class="o">=</span> <span class="n">TargetASC</span><span class="o">-&gt;</span><span class="n">ApplyGameplayEffectSpecToSelf</span><span class="p">(</span><span class="o">*</span><span class="n">EffectSpecHandle</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">Get</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="kt">bool</span> <span class="n">bIsInfinite</span> <span class="o">=</span> <span class="n">EffectSpecHandle</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">Get</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Def</span><span class="p">.</span><span class="n">Get</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">DurationPolicy</span> <span class="o">==</span> <span class="n">EGameplayEffectDurationType</span><span class="o">::</span><span class="n">Infinite</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">bIsInfinite</span> <span class="o">&amp;&amp;</span> <span class="n">InfiniteEffectRemovePolicy</span> <span class="o">==</span> <span class="n">EEffectRemovePolicy</span><span class="o">::</span><span class="n">RemoveOnEndOverlap</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">ActiveEffectHandls</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">ActiveEffectHandle</span><span class="p">,</span><span class="n">TargetASC</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>移除<br/>通过Actor的ASC查找Map里对应的GEHandle，使用Handle移除Actor的ASC上面的GE后，还要在Map里移除这一对元素.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraEffectActor</span><span class="o">::</span><span class="n">RemoveGE</span><span class="p">(</span><span class="n">AActor</span><span class="o">*</span> <span class="n">TargetActor</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span> <span class="o">=</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="o">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">TargetActor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">IsValid</span><span class="p">(</span><span class="n">ASC</span><span class="p">))</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">TArray</span><span class="o">&lt;</span><span class="n">FActiveGameplayEffectHandle</span><span class="o">&gt;</span> <span class="n">HandlesToRemove</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="n">TTuple</span><span class="o">&lt;</span><span class="n">FActiveGameplayEffectHandle</span><span class="p">,</span> <span class="n">UAbilitySystemComponent</span><span class="o">*&gt;</span> <span class="nl">HandlePair</span> <span class="p">:</span> <span class="n">ActiveEffectHandls</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">HandlePair</span><span class="p">.</span><span class="n">Value</span> <span class="o">==</span> <span class="n">ASC</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">ASC</span><span class="o">-&gt;</span><span class="n">RemoveActiveGameplayEffect</span><span class="p">(</span><span class="n">HandlePair</span><span class="p">.</span><span class="n">Key</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="n">HandlesToRemove</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">HandlePair</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="n">FActiveGameplayEffectHandle</span><span class="o">&amp;</span> <span class="nl">Handle</span> <span class="p">:</span> <span class="n">HandlesToRemove</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">ActiveEffectHandls</span><span class="p">.</span><span class="n">FindAndRemoveChecked</span><span class="p">(</span><span class="n">Handle</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		
+</span></span><span class="line"><span class="cl">	<span class="cm">/*使用迭代器遍历 TMap
+</span></span></span><span class="line"><span class="cl"><span class="cm">	for (auto It = ActiveEffectHandls.CreateIterator(); It; ++It)
+</span></span></span><span class="line"><span class="cl"><span class="cm">	{
+</span></span></span><span class="line"><span class="cl"><span class="cm">		if (It-&gt;Value == ASC)
+</span></span></span><span class="line"><span class="cl"><span class="cm">		{
+</span></span></span><span class="line"><span class="cl"><span class="cm">			// 删除 ActiveGameplayEffect
+</span></span></span><span class="line"><span class="cl"><span class="cm">			ASC-&gt;RemoveActiveGameplayEffect(It-&gt;Key);
+</span></span></span><span class="line"><span class="cl"><span class="cm">			// 删除 TMap 中的元素
+</span></span></span><span class="line"><span class="cl"><span class="cm">			It.RemoveCurrent();
+</span></span></span><span class="line"><span class="cl"><span class="cm">		}
+</span></span></span><span class="line"><span class="cl"><span class="cm">	}*/</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="数值的限制-与-响应">数值的限制 与 响应
+</h2><p>生命值等属性在应用GE后 可能会变成负数，或者超出最大生命值，</p>
+<h3 id="preattributechange">PreAttributeChange
+</h3><hr>
+<p><code>PreAttributeChange(const FGameplayAttribute&amp; Attribute, float&amp; NewValue)</code>是<code>AttributeSet</code>中的主要函数之一, 其在修改发生前响应<code>Attribute</code>的CurrentValue变化, 其是通过引用参数NewValue限制(Clamp)CurrentValue即将进行的修改的理想位置.</p>
+<p>例如像样例项目那样限制移动速度<code>Modifier</code>:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">if (Attribute == GetMoveSpeedAttribute())
+</span></span><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">	// Cannot slow less than 150 units/s and cannot boost more than 1000 units/s
+</span></span><span class="line"><span class="cl">	NewValue = FMath::Clamp&lt;float&gt;(NewValue, 150, 1000);
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>GetMoveSpeedAttribute()</code>函数是由我们在<code>AttributeSet.h</code>中添加的宏块创建的(<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-as-attributes"  target="_blank" rel="noopener"
+    >定义Attribute</a>).</p>
+<p><code>PreAttributeChange()</code>可以被<code>Attribute</code>的任何修改触发, 无论是使用<code>Attribute</code>的setter(由<code>AttributeSet.h</code>中的宏块定义(<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-as-attributes"  target="_blank" rel="noopener"
+    >定义Attribute</a>))还是使用<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-ge"  target="_blank" rel="noopener"
+    >GameplayEffect</a>.</p>
+<p><strong>Note</strong>: 在这里做的任何限制都不会永久性地修改<code>ASC</code>中的<code>Modifier</code>, 只会修改查询<code>Modifier</code>的返回值, 这意味着像<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-ge-ec"  target="_blank" rel="noopener"
+    >GameplayEffectExecutionCalculations</a>和<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-ge-mmc"  target="_blank" rel="noopener"
+    >ModifierMagnitudeCalculations</a>这种自所有<code>Modifier</code>重新计算CurrentValue的函数需要再次执行限制(Clamp)操作.</p>
+<p><strong>Note</strong>: Epic对于PreAttributeChange()的注释说明不要将该函数用于游戏逻辑事件, 而主要在其中做限制操作. 对于修改<code>Attribute</code>的游戏逻辑事件的建议位置是<code>UAbilitySystemComponent::GetGameplayAttributeValueChangeDelegate(FGameplayAttribute Attribute)</code>(<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-a-changes"  target="_blank" rel="noopener"
+    >响应Attribute变化</a>).</p>
+<hr>
+<p>限制生命值示例:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAttributeSet</span><span class="o">::</span><span class="n">PreAttributeChange</span><span class="p">(</span><span class="k">const</span> <span class="n">FGameplayAttribute</span><span class="o">&amp;</span> <span class="n">Attribute</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">NewValue</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">PreAttributeChange</span><span class="p">(</span><span class="n">Attribute</span><span class="p">,</span> <span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">Attribute</span> <span class="o">==</span> <span class="n">GetHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">NewValue</span> <span class="o">=</span> <span class="n">FMath</span><span class="o">::</span><span class="n">Clamp</span><span class="p">(</span><span class="n">NewValue</span><span class="p">,</span><span class="mf">0.0f</span><span class="p">,</span><span class="n">GetMaxHealth</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">Attribute</span> <span class="o">==</span> <span class="n">GetManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">NewValue</span> <span class="o">=</span> <span class="n">FMath</span><span class="o">::</span><span class="n">Clamp</span><span class="p">(</span><span class="n">NewValue</span><span class="p">,</span><span class="mf">0.0f</span><span class="p">,</span><span class="n">GetMaxMana</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-gameplayeffect/Pre.png"
+	width="1076"
+	height="472"
+	srcset="/p/gas-a-gameplayeffect/Pre_hu14292422971064361391.png 480w, /p/gas-a-gameplayeffect/Pre_hu15711598795373238205.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="227"
+		data-flex-basis="547px"
+	
+></p>
+<p>·当前值的变化 - 在变化发生之前<br/>
+·由属性的变化触发 - 属性访问器 - GameplayEffects<br/>
+·不会永久更改修饰符，只会更改查询修饰符返回的值<br/>
+·后续操作会重新计算所有修饰符的当前值 - 我们需要再次限制<br/></p>
+<h3 id="postgameplayeffectexecute">PostGameplayEffectExecute
+</h3><hr>
+<p><code>PostGameplayEffectExecute(const FGameplayEffectModCallbackData &amp; Data)</code>仅在<code>即刻(Instant)GameplayEffect</code>对<code>Attribute</code>的BaseValue修改之后触发, 当<a class="link" href="https://github.com/BillEliot/GASDocumentation_Chinese?tab=readme-ov-file#concepts-ge"  target="_blank" rel="noopener"
+    >GameplayEffect</a>对其修改时, 这就是一个处理更多<code>Attribute</code>操作的有效位置.</p>
+<p>例如, 在样例项目中, 我们在这里从生命值<code>Attribute</code>中减去了最终的伤害值<code>Meta Attribute</code>, 如果有护盾值<code>Attribute</code>的话, 我们也会在减除生命值之前从护盾值中减除伤害值. 样例项目也在这里应用了被击打反应动画, 显示浮动的伤害数值和为击杀者分配经验值和赏金. 通过设计, 伤害值<code>Meta Attribute</code>总是会传递给<code>即刻(Instant)GameplayEffect</code>而不是Attribute Setter.</p>
+<p>其他只会由<code>即刻(Instant)GameplayEffect</code>修改BaseValue的<code>Attribute</code>, 像魔法值和耐力值, 也可以在这里被限制为其相应的最大值<code>Attribute</code>.</p>
+<p><strong>Note</strong>: 当PostGameplayEffectExecute()被调用时, 对<code>Attribute</code>的修改已经发生, 但是还没有被同步回客户端, 因此在这里限制值不会造成对客户端的二次同步, 客户端只会接收到限制后的值.</p>
+<hr>
+<p>限制生命值:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraAttributeSet</span><span class="o">::</span><span class="n">PostGameplayEffectExecute</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">FGameplayEffectModCallbackData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">PostGameplayEffectExecute</span><span class="p">(</span><span class="n">Data</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">EvaluatedData</span><span class="p">.</span><span class="n">Attribute</span> <span class="o">==</span> <span class="n">GetHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetHealth</span><span class="p">(</span><span class="n">FMath</span><span class="o">::</span><span class="n">Clamp</span><span class="p">(</span><span class="n">GetHealth</span><span class="p">(),</span><span class="mf">0.f</span><span class="p">,</span><span class="n">GetMaxHealth</span><span class="p">()));</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">EvaluatedData</span><span class="p">.</span><span class="n">Attribute</span> <span class="o">==</span> <span class="n">GetManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetMana</span><span class="p">(</span><span class="n">FMath</span><span class="o">::</span><span class="n">Clamp</span><span class="p">(</span><span class="n">GetMana</span><span class="p">(),</span><span class="mf">0.f</span><span class="p">,</span><span class="n">GetMaxMana</span><span class="p">()));</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>PreAttributeChange 和 PostGameplayEffectExecute 一起使用，这样才是真正的限制住了</p>
+<hr>
+<h2 id="fgameplayeffectmodcallbackdata">FGameplayEffectModCallbackData
+</h2><p>PostGameplayEffectExecute的参数FGameplayEffectModCallbackData&amp; Data，它包含了很多信息，<br/></p>
+<p><img src="/p/gas-a-gameplayeffect/DataInfoC.png"
+	width="1069"
+	height="932"
+	srcset="/p/gas-a-gameplayeffect/DataInfoC_hu16394639859445075740.png 480w, /p/gas-a-gameplayeffect/DataInfoC_hu3723023171650737278.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="114"
+		data-flex-basis="275px"
+	
+>下面这个 <code>FEffectProperites</code> 结构体里的信息 都能从Data里面获得.<br/>Source开头 指的是 “属性的改变是谁打过来的”，Target开头 指的是“受害者”<br/>例如: 泽拉斯Q了一下诺手， 这个Q的伤害是泽拉斯造成的，Source是泽拉斯.<br/>诺手接收到Q的伤害之后，要在PostGameplayEffectExecute里面一通计算 响应伤害，Target是诺手.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">USTRUCT</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">FEffectProperites</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">FEffectProperites</span><span class="p">(){};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">FGameplayEffectContextHandle</span> <span class="n">EffectContextHandle</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">SourceASC</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AActor</span><span class="o">*</span> <span class="n">SourceAvatarActor</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AController</span><span class="o">*</span> <span class="n">SourceController</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ACharacter</span><span class="o">*</span> <span class="n">SourceCharacter</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">////////////////////////////////////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">TargetASC</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AActor</span><span class="o">*</span> <span class="n">TargetAvatarActor</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AController</span><span class="o">*</span> <span class="n">TargetController</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ACharacter</span><span class="o">*</span> <span class="n">TargetCharacter</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>FGameplayEffectModCallbackData&amp; Data的使用方法:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="n">void</span> <span class="n">UAuraAttributeSet</span><span class="p">::</span><span class="n">PostGameplayEffectExecute</span><span class="p">(</span><span class="k">const</span> <span class="n">struct</span> <span class="n">FGameplayEffectModCallbackData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="p">::</span><span class="n">PostGameplayEffectExecute</span><span class="p">(</span><span class="n">Data</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FEffectProperites</span> <span class="n">Props</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">SetEffectProperties</span><span class="p">(</span><span class="n">Data</span><span class="p">,</span><span class="n">Props</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">void</span> <span class="n">UAuraAttributeSet</span><span class="p">::</span><span class="n">SetEffectProperties</span><span class="p">(</span><span class="k">const</span> <span class="n">struct</span> <span class="n">FGameplayEffectModCallbackData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">,</span><span class="n">FEffectProperites</span><span class="o">&amp;</span> <span class="n">Props</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="n">Props</span><span class="o">.</span><span class="n">EffectContextHandle</span>  <span class="o">=</span> <span class="n">Data</span><span class="o">.</span><span class="n">EffectSpec</span><span class="o">.</span><span class="n">GetContext</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Props</span><span class="o">.</span><span class="n">SourceASC</span> <span class="o">=</span> <span class="n">Props</span><span class="o">.</span><span class="n">EffectContextHandle</span><span class="o">.</span><span class="n">GetOriginalInstigatorAbilitySystemComponent</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">IsValid</span><span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">SourceASC</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">Props</span><span class="o">.</span><span class="n">SourceASC</span><span class="o">-&gt;</span><span class="n">AbilityActorInfo</span><span class="o">.</span><span class="n">IsValid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">Props</span><span class="o">.</span><span class="n">SourceASC</span><span class="o">-&gt;</span><span class="n">AbilityActorInfo</span><span class="o">-&gt;</span><span class="n">AvatarActor</span><span class="o">.</span><span class="n">IsValid</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Props</span><span class="o">.</span><span class="n">SourceAvatarActor</span> <span class="o">=</span> <span class="n">Props</span><span class="o">.</span><span class="n">SourceASC</span><span class="o">-&gt;</span><span class="n">GetAvatarActor</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Props</span><span class="o">.</span><span class="n">SourceController</span> <span class="o">=</span> <span class="n">Props</span><span class="o">.</span><span class="n">SourceASC</span><span class="o">-&gt;</span><span class="n">AbilityActorInfo</span><span class="o">-&gt;</span><span class="n">PlayerController</span><span class="o">.</span><span class="n">Get</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">SourceController</span> <span class="o">==</span> <span class="n">nullptr</span> <span class="o">&amp;&amp;</span> <span class="n">Props</span><span class="o">.</span><span class="n">SourceAvatarActor</span><span class="o">!=</span><span class="n">nullptr</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="n">APawn</span><span class="o">*</span> <span class="n">Pawn</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">APawn</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">SourceAvatarActor</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">			<span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="n">Props</span><span class="o">.</span><span class="n">SourceController</span> <span class="o">=</span> <span class="n">Pawn</span><span class="o">-&gt;</span><span class="n">GetController</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">SourceController</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">Props</span><span class="o">.</span><span class="n">SourceCharacter</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">ACharacter</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">SourceController</span><span class="o">-&gt;</span><span class="n">GetPawn</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">Data</span><span class="o">.</span><span class="n">Target</span><span class="o">.</span><span class="n">AbilityActorInfo</span><span class="o">.</span><span class="n">IsValid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">Data</span><span class="o">.</span><span class="n">Target</span><span class="o">.</span><span class="n">AbilityActorInfo</span><span class="o">-&gt;</span><span class="n">AvatarActor</span><span class="o">.</span><span class="n">IsValid</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Props</span><span class="o">.</span><span class="n">TargetAvatarActor</span> <span class="o">=</span> <span class="n">Data</span><span class="o">.</span><span class="n">Target</span><span class="o">.</span><span class="n">AbilityActorInfo</span><span class="o">-&gt;</span><span class="n">AvatarActor</span><span class="o">.</span><span class="n">Get</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Props</span><span class="o">.</span><span class="n">TargetController</span> <span class="o">=</span> <span class="n">Data</span><span class="o">.</span><span class="n">Target</span><span class="o">.</span><span class="n">AbilityActorInfo</span><span class="o">-&gt;</span><span class="n">PlayerController</span><span class="o">.</span><span class="n">Get</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Props</span><span class="o">.</span><span class="n">TargetCharacter</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">ACharacter</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">TargetAvatarActor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="n">Props</span><span class="o">.</span><span class="n">TargetASC</span> <span class="o">=</span> <span class="n">UAbilitySystemBlueprintLibrary</span><span class="p">::</span><span class="n">GetAbilitySystemComponent</span><span class="p">(</span><span class="n">Props</span><span class="o">.</span><span class="n">TargetAvatarActor</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-gameplayeffect/DataInfo.png"
+	width="1609"
+	height="875"
+	srcset="/p/gas-a-gameplayeffect/DataInfo_hu16735910412923122584.png 480w, /p/gas-a-gameplayeffect/DataInfo_hu168401407602852220.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="183"
+		data-flex-basis="441px"
+	
+></p>
+<p>使用Prop:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">EvaluatedData</span><span class="p">.</span><span class="n">Attribute</span> <span class="o">==</span> <span class="n">GetHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetHealth</span><span class="p">(</span><span class="n">FMath</span><span class="o">::</span><span class="n">Clamp</span><span class="p">(</span><span class="n">GetHealth</span><span class="p">(),</span><span class="mf">0.f</span><span class="p">,</span><span class="n">GetMaxHealth</span><span class="p">()));</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">		<span class="n">UE_LOG</span><span class="p">(</span><span class="n">LogTemp</span><span class="p">,</span><span class="n">Warning</span><span class="p">,</span><span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;Changed Health on %s, Health:%f&#34;</span><span class="p">),</span><span class="o">*</span><span class="n">Props</span><span class="p">.</span><span class="n">TargetAvatarActor</span><span class="o">-&gt;</span><span class="n">GetName</span><span class="p">(),</span><span class="n">GetHealth</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>诺手接收到伤害后，打印诺手的名字和血量，所以需要TargetAvatarActor来获得名字.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            国窖1573 - 
+        
+        2025 AKaKLya
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.29.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

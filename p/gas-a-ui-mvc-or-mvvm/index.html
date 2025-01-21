@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="MVC 插播一条：UE5中 有一套MVVM插件 可以与UMG联动。创建MVVM对象，在这个对象里面创建一些变量什么的，当变量改变时 它自己就会发出广播通知 https://www.bilibili.com/video/BV1Dj411N735/ https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel 下面开始视频教程的内容： 将应用程序分为三个核心组件：模型（Model）、视图（View）和控制器（Controller），以实现关注点分离。 在这个系列课程中，使用这个架构来更新UMG， 玩家属性发生变化&mdash;&gt;通知Controller&mdash;&gt;Controller发出消息广播，UMG订阅Controller的消息广播，这样就把 玩家和UMG 联系起来了. 直观上看的话，也就是 玩家大喊一声“该更新了”，具体去更新谁，玩家并不关心。 在整个过程中，只关注一个中介者—Controller，需要更新自己数据的UMG界面 自己去订阅消息通知，变化事件发生时，Controller发出通知消息， UMG自己去查看是 生命值变化了，还是魔法值变化了，去做它自己该做的事情。 套用MVC模式，View = UMG，Model = 玩家属性，Controller就是这两个之间的中间件. Controller可以是一个UObject. (这里的Controller不是引擎中的 AI控制器 / 玩家控制器，只是一个U类对象) 这是最终要实现的结构，UMG内部需要Controller的指针，用来订阅Controller的消息， UMG和Controller都集中在HUD里面，HUD同时创建UMG、Controller，并且当场就把Controller与UMG 关联起来。 GameMode管理HUD，GameMode会自动创建HUD. 而HUD内部管理UMG、Controller，HUD对外公开一个函数，用来接收玩家相关的信息 以及 创建UMG、Controller 1 InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) 这个函数接收4个参数 用来获得玩家信息，只需要一个合适的时机调用这个HUD的函数，一切就能关联起来。 对于人类玩家角色来说，GAS相关组件都放在PlayerState里面，当角色死亡时 死的只是Actor 不是PlaeyrState，所以这些组件不会丢失角色的属性信息，角色复活时 就得重新获得PlayerState里面的GAS组件信息。复活 就可以视为是初始化了，游戏刚开始时，角色也算是“复活”，即调用 PossessedBy 函数，在PossessedBy 函数里面获得GAS信息的同时，就通知UI去更新信息。 这就是InitOverlay调用的时机，即在 PossessedBy 里面调用. PossessedBy 拿到 PC、PS、ASC、AS 之后 传给HUD::InitOverlay，让HUD拿着这些信息去构造Controller 有了这些指导思想，接下来的内容就容易看懂了. 整这么一大堆，其实就是 本来UMG能直接GetPlayerCharacter，Cast到AuraCharacter，角色身上的所有东西都能获取，GetPlayerState ，Cast到AuraPlayerState也能获取GAS组件。这已经可以运行了，只是多了一个中间件，原本是 角色&mdash;&gt;UMG，一站直达的， 现在需要 角色&ndash;&gt;中间件&mdash;&gt;UMG于是乎，就要想办法把这一串逻辑 重新打通，就仅此而已.">
+<title>GAS A - UI - MVC or MVVM</title>
+
+<link rel='canonical' href='https://akaklya.github.io/p/gas-a-ui-mvc-or-mvvm/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - UI - MVC or MVVM">
+<meta property='og:description' content="MVC 插播一条：UE5中 有一套MVVM插件 可以与UMG联动。创建MVVM对象，在这个对象里面创建一些变量什么的，当变量改变时 它自己就会发出广播通知 https://www.bilibili.com/video/BV1Dj411N735/ https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel 下面开始视频教程的内容： 将应用程序分为三个核心组件：模型（Model）、视图（View）和控制器（Controller），以实现关注点分离。 在这个系列课程中，使用这个架构来更新UMG， 玩家属性发生变化&mdash;&gt;通知Controller&mdash;&gt;Controller发出消息广播，UMG订阅Controller的消息广播，这样就把 玩家和UMG 联系起来了. 直观上看的话，也就是 玩家大喊一声“该更新了”，具体去更新谁，玩家并不关心。 在整个过程中，只关注一个中介者—Controller，需要更新自己数据的UMG界面 自己去订阅消息通知，变化事件发生时，Controller发出通知消息， UMG自己去查看是 生命值变化了，还是魔法值变化了，去做它自己该做的事情。 套用MVC模式，View = UMG，Model = 玩家属性，Controller就是这两个之间的中间件. Controller可以是一个UObject. (这里的Controller不是引擎中的 AI控制器 / 玩家控制器，只是一个U类对象) 这是最终要实现的结构，UMG内部需要Controller的指针，用来订阅Controller的消息， UMG和Controller都集中在HUD里面，HUD同时创建UMG、Controller，并且当场就把Controller与UMG 关联起来。 GameMode管理HUD，GameMode会自动创建HUD. 而HUD内部管理UMG、Controller，HUD对外公开一个函数，用来接收玩家相关的信息 以及 创建UMG、Controller 1 InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) 这个函数接收4个参数 用来获得玩家信息，只需要一个合适的时机调用这个HUD的函数，一切就能关联起来。 对于人类玩家角色来说，GAS相关组件都放在PlayerState里面，当角色死亡时 死的只是Actor 不是PlaeyrState，所以这些组件不会丢失角色的属性信息，角色复活时 就得重新获得PlayerState里面的GAS组件信息。复活 就可以视为是初始化了，游戏刚开始时，角色也算是“复活”，即调用 PossessedBy 函数，在PossessedBy 函数里面获得GAS信息的同时，就通知UI去更新信息。 这就是InitOverlay调用的时机，即在 PossessedBy 里面调用. PossessedBy 拿到 PC、PS、ASC、AS 之后 传给HUD::InitOverlay，让HUD拿着这些信息去构造Controller 有了这些指导思想，接下来的内容就容易看懂了. 整这么一大堆，其实就是 本来UMG能直接GetPlayerCharacter，Cast到AuraCharacter，角色身上的所有东西都能获取，GetPlayerState ，Cast到AuraPlayerState也能获取GAS组件。这已经可以运行了，只是多了一个中间件，原本是 角色&mdash;&gt;UMG，一站直达的， 现在需要 角色&ndash;&gt;中间件&mdash;&gt;UMG于是乎，就要想办法把这一串逻辑 重新打通，就仅此而已.">
+<meta property='og:url' content='https://akaklya.github.io/p/gas-a-ui-mvc-or-mvvm/'>
+<meta property='og:site_name' content='AKaKLya'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-11T11:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-11T11:59:56&#43;08:00'/>
+<meta name="twitter:title" content="GAS A - UI - MVC or MVVM">
+<meta name="twitter:description" content="MVC 插播一条：UE5中 有一套MVVM插件 可以与UMG联动。创建MVVM对象，在这个对象里面创建一些变量什么的，当变量改变时 它自己就会发出广播通知 https://www.bilibili.com/video/BV1Dj411N735/ https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel 下面开始视频教程的内容： 将应用程序分为三个核心组件：模型（Model）、视图（View）和控制器（Controller），以实现关注点分离。 在这个系列课程中，使用这个架构来更新UMG， 玩家属性发生变化&mdash;&gt;通知Controller&mdash;&gt;Controller发出消息广播，UMG订阅Controller的消息广播，这样就把 玩家和UMG 联系起来了. 直观上看的话，也就是 玩家大喊一声“该更新了”，具体去更新谁，玩家并不关心。 在整个过程中，只关注一个中介者—Controller，需要更新自己数据的UMG界面 自己去订阅消息通知，变化事件发生时，Controller发出通知消息， UMG自己去查看是 生命值变化了，还是魔法值变化了，去做它自己该做的事情。 套用MVC模式，View = UMG，Model = 玩家属性，Controller就是这两个之间的中间件. Controller可以是一个UObject. (这里的Controller不是引擎中的 AI控制器 / 玩家控制器，只是一个U类对象) 这是最终要实现的结构，UMG内部需要Controller的指针，用来订阅Controller的消息， UMG和Controller都集中在HUD里面，HUD同时创建UMG、Controller，并且当场就把Controller与UMG 关联起来。 GameMode管理HUD，GameMode会自动创建HUD. 而HUD内部管理UMG、Controller，HUD对外公开一个函数，用来接收玩家相关的信息 以及 创建UMG、Controller 1 InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) 这个函数接收4个参数 用来获得玩家信息，只需要一个合适的时机调用这个HUD的函数，一切就能关联起来。 对于人类玩家角色来说，GAS相关组件都放在PlayerState里面，当角色死亡时 死的只是Actor 不是PlaeyrState，所以这些组件不会丢失角色的属性信息，角色复活时 就得重新获得PlayerState里面的GAS组件信息。复活 就可以视为是初始化了，游戏刚开始时，角色也算是“复活”，即调用 PossessedBy 函数，在PossessedBy 函数里面获得GAS信息的同时，就通知UI去更新信息。 这就是InitOverlay调用的时机，即在 PossessedBy 里面调用. PossessedBy 拿到 PC、PS、ASC、AS 之后 传给HUD::InitOverlay，让HUD拿着这些信息去构造Controller 有了这些指导思想，接下来的内容就容易看懂了. 整这么一大堆，其实就是 本来UMG能直接GetPlayerCharacter，Cast到AuraCharacter，角色身上的所有东西都能获取，GetPlayerState ，Cast到AuraPlayerState也能获取GAS组件。这已经可以运行了，只是多了一个中间件，原本是 角色&mdash;&gt;UMG，一站直达的， 现在需要 角色&ndash;&gt;中间件&mdash;&gt;UMG于是乎，就要想办法把这一串逻辑 重新打通，就仅此而已.">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/d_hu15622052934649275245.jpg" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🍥</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">AKaKLya</a></h1>
+            <h2 class="site-description">点击</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#mvc">MVC</a></li>
+    <li><a href="#controller--widget">Controller &amp; Widget</a>
+      <ol>
+        <li><a href="#创建umg">创建UMG</a></li>
+        <li><a href="#hud">HUD</a></li>
+        <li><a href="#widget-controller">Widget Controller</a></li>
+        <li><a href="#initoverlay">InitOverlay</a></li>
+      </ol>
+    </li>
+    <li><a href="#消息广播">消息广播</a></li>
+    <li><a href="#mvvm">MVVM</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/gas-a-ui-mvc-or-mvvm/">GAS A - UI - MVC or MVVM</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 11, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 5 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="mvc">MVC
+</h2><p>插播一条：UE5中 有一套MVVM插件 可以与UMG联动。<br/>创建MVVM对象，在这个对象里面创建一些变量什么的，当变量改变时 它自己就会发出广播通知</p>
+<p><a class="link" href="https://www.bilibili.com/video/BV1Dj411N735/"  target="_blank" rel="noopener"
+    >https://www.bilibili.com/video/BV1Dj411N735/</a></p>
+<p><a class="link" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel"  target="_blank" rel="noopener"
+    >https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel</a></p>
+<p>下面开始视频教程的内容：</p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/MVC.png"
+	width="849"
+	height="408"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVC_hu12337788387213735552.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVC_hu12916864498255463285.png 1024w"
+	loading="lazy"
+	
+		alt="MVC"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="208"
+		data-flex-basis="499px"
+	
+></p>
+<p>将应用程序分为三个核心组件：模型（Model）、视图（View）和控制器（Controller），以实现关注点分离。</p>
+<p>在这个系列课程中，使用这个架构来更新UMG， 玩家属性发生变化&mdash;&gt;通知Controller&mdash;&gt;Controller发出消息广播，UMG订阅Controller的消息广播，这样就把 玩家和UMG 联系起来了.</p>
+<p>直观上看的话，也就是 玩家大喊一声“该更新了”，具体去更新谁，玩家并不关心。<br/></p>
+<p>在整个过程中，只关注一个中介者—Controller，需要更新自己数据的UMG界面 自己去订阅消息通知，变化事件发生时，Controller发出通知消息， UMG自己去查看是 生命值变化了，还是魔法值变化了，去做它自己该做的事情。</p>
+<p>套用MVC模式，View = UMG，Model = 玩家属性，Controller就是这两个之间的中间件. <br/>Controller可以是一个UObject.  (这里的Controller不是引擎中的 AI控制器 / 玩家控制器，只是一个U类对象)</p>
+<hr>
+<p>这是最终要实现的结构，UMG内部需要Controller的指针，用来订阅Controller的消息，</p>
+<p>UMG和Controller都集中在HUD里面，HUD同时创建UMG、Controller，并且当场就把Controller与UMG 关联起来。 GameMode管理HUD，GameMode会自动创建HUD. <br/>而HUD内部管理UMG、Controller，<br/>HUD对外公开一个函数，用来接收玩家相关的信息 以及 创建UMG、Controller</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">InitOverlay</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span> <span class="n">APlayerState</span><span class="o">*</span> <span class="n">PS</span><span class="p">,</span> <span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span> <span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这个函数接收4个参数 用来获得玩家信息，只需要一个合适的时机调用这个HUD的函数，一切就能关联起来。</p>
+<hr>
+<p>对于人类玩家角色来说，GAS相关组件都放在PlayerState里面，当角色死亡时  死的只是Actor 不是PlaeyrState，所以这些组件不会丢失角色的属性信息，角色复活时 就得重新获得PlayerState里面的GAS组件信息。<br/>复活 就可以视为是初始化了，游戏刚开始时，角色也算是“复活”，即调用 PossessedBy 函数，<br/>在PossessedBy 函数里面获得GAS信息的同时，就通知UI去更新信息。</p>
+<p>这就是InitOverlay调用的时机，即在 PossessedBy 里面调用. <br/>PossessedBy 拿到 PC、PS、ASC、AS 之后 传给HUD::InitOverlay，让HUD拿着这些信息去构造Controller</p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/MVC_4.png"
+	width="1921"
+	height="750"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVC_4_hu17647897481463188064.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVC_4_hu18224744630370114604.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="256"
+		data-flex-basis="614px"
+	
+></p>
+<p>有了这些指导思想，接下来的内容就容易看懂了.</p>
+<hr>
+<p>整这么一大堆，其实就是 本来UMG能直接GetPlayerCharacter，Cast到AuraCharacter，角色身上的所有东西都能获取，GetPlayerState ，Cast到AuraPlayerState也能获取GAS组件。<br/>这已经可以运行了，只是多了一个中间件，原本是 角色&mdash;&gt;UMG，一站直达的， 现在需要 角色&ndash;&gt;中间件&mdash;&gt;UMG<br/>于是乎，就要想办法把这一串逻辑 重新打通，就仅此而已.</p>
+<hr>
+<h2 id="controller--widget">Controller &amp; Widget
+</h2><p><img src="/p/gas-a-ui-mvc-or-mvvm/MVC_1.png"
+	width="1758"
+	height="645"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVC_1_hu6958186256378505036.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVC_1_hu420441755536613691.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="272"
+		data-flex-basis="654px"
+	
+></p>
+<p>粗糙的结构图，WidgetController只是个继承自UObject的类，需要4个变量，PC、PS、ASC、AS，<br/>UserWidget 也就是UMG的父类， 有WidgetController的Getter、Setter，在代码里面调用SetWidgetController()，<br/>SetWidgetController内部又调用WidgetControllerSet()，这是用来调用蓝图事件的，绑定的事件在UMG的蓝图里做，这样就打通了C++和蓝图的通信.</p>
+<h3 id="创建umg">创建UMG
+</h3><p>后面只是在蓝图里创建了几个UMG，这是结构图， WBP_Overlay是主界面，里面有小UI，WBP_HealthGlobe等等.</p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/MVC_2.png"
+	width="1209"
+	height="869"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVC_2_hu506450959505937609.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVC_2_hu2315438448006971756.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="139"
+		data-flex-basis="333px"
+	
+></p>
+<h3 id="hud">HUD
+</h3><p>在哪里创建主UI？Controller存放到哪里？又如何初始化？</p>
+<p><em><strong>HUD的目的是 告知玩家当前游戏状态，即分数、生命值、游戏剩余时间等。</strong></em></p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/HUD.png"
+	width="1138"
+	height="487"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/HUD_hu3162798569139516544.png 480w, /p/gas-a-ui-mvc-or-mvvm/HUD_hu1954471271646720683.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="233"
+		data-flex-basis="560px"
+	
+></p>
+<p>这个课程把Controller放到了HUD里，UMG也由HUD来创建。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">AuraHUD</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAuraUserWidget</span><span class="o">&gt;</span> <span class="n">OverlayWidget</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  
+</span></span><span class="line"><span class="cl">    <span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UAuraUserWidget</span><span class="o">&gt;</span> <span class="n">OverlayWidgetClass</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这是常用的操作，在蓝图里指定OverlayWidgetClass 选择使用哪一个蓝图，在C++中使用这个class创建对象.</p>
+<p>把BP_AuraHUD放到GameMode里面，用于创建BP_AuraHUD</p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/HUD_2.png"
+	width="851"
+	height="542"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/HUD_2_hu5597617234598613045.png 480w, /p/gas-a-ui-mvc-or-mvvm/HUD_2_hu10253358754011380857.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="157"
+		data-flex-basis="376px"
+	
+></p>
+<h3 id="widget-controller">Widget Controller
+</h3><p>HUD能创建出UMG了，<strong>还剩下Controller没有初始化</strong>，<br/>AuraWidgetController里面<strong>还有4个变量需要初始化</strong>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">APlayerController</span><span class="o">&gt;</span> <span class="n">PlayerController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">APlayerState</span><span class="o">&gt;</span> <span class="n">PlayerState</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAbilitySystemComponent</span><span class="o">&gt;</span> <span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAttributeSet</span><span class="o">&gt;</span> <span class="n">AttributeSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="err">————————————————————————————————————————————————————————————————————</span>
+</span></span><span class="line"><span class="cl"><span class="n">USTRUCT</span><span class="p">(</span><span class="n">BlueprintType</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">FWidgetControllerParams</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FWidgetControllerParams</span><span class="p">(){};</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FWidgetControllerParams</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span><span class="n">APlayerState</span><span class="o">*</span> <span class="n">PS</span><span class="p">,</span><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span><span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="o">:</span> <span class="n">PlayerController</span><span class="p">(</span><span class="n">PC</span><span class="p">),</span><span class="n">PlayerState</span><span class="p">(</span><span class="n">PS</span><span class="p">),</span><span class="n">AbilitySystemComponent</span><span class="p">(</span><span class="n">ASC</span><span class="p">),</span><span class="n">AttributeSet</span><span class="p">(</span><span class="n">AS</span><span class="p">)</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadWrite</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">APlayerController</span><span class="o">&gt;</span> <span class="n">PlayerController</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadWrite</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">APlayerState</span><span class="o">&gt;</span> <span class="n">PlayerState</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadWrite</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAbilitySystemComponent</span><span class="o">&gt;</span> <span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">,</span><span class="n">BlueprintReadWrite</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAttributeSet</span><span class="o">&gt;</span> <span class="n">AttributeSet</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UAuraWidgetController</span><span class="o">::</span><span class="n">SetWidgetControllerParams</span><span class="p">(</span><span class="k">const</span> <span class="n">FWidgetControllerParams</span><span class="o">&amp;</span> <span class="n">WCParams</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PlayerController</span> <span class="o">=</span> <span class="n">WCParams</span><span class="p">.</span><span class="n">PlayerController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PlayerState</span> <span class="o">=</span> <span class="n">WCParams</span><span class="p">.</span><span class="n">PlayerState</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">WCParams</span><span class="p">.</span><span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">WCParams</span><span class="p">.</span><span class="n">AttributeSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>看着比较长，实际上只是定义一个结构体，函数接收这个结构体来初始化这些变量， 思考题：为什么要用结构体？ WidgetController里面的变量初始化完了，那么<strong>WidgetController本体在哪里初始化？</strong><br/></p>
+<p>创建OverlayWidgetController ，它继承自 UAuraWidgetController，用来更新主UI.</p>
+<p>在AuraHUD里添加两个变量，前面的UMG在HUD里初始化了，<strong>WidgetController也在HUD初始化.</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">    <span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UOverlayWidgetController</span><span class="o">&gt;</span> <span class="n">OverlayWidgetController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">TSubclassOf</span><span class="o">&lt;</span><span class="n">UOverlayWidgetController</span><span class="o">&gt;</span> <span class="n">OverlayWidgetControllerClass</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl"><span class="n">UOverlayWidgetController</span><span class="o">*</span> <span class="n">AAuraHUD</span><span class="o">::</span><span class="n">GetOverlayWidgetController</span><span class="p">(</span><span class="k">const</span> <span class="n">FWidgetControllerParams</span><span class="o">&amp;</span> <span class="n">WCParams</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">OverlayWidgetController</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OverlayWidgetController</span> <span class="o">=</span> <span class="n">NewObject</span><span class="o">&lt;</span><span class="n">UOverlayWidgetController</span><span class="o">&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="n">OverlayWidgetControllerClass</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OverlayWidgetController</span><span class="o">-&gt;</span><span class="n">SetWidgetControllerParams</span><span class="p">(</span><span class="n">WCParams</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OverlayWidgetController</span><span class="o">-&gt;</span><span class="n">BindCallbacksToDependencies</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="n">OverlayWidgetController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">OverlayWidgetController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>GetOverlayWidgetController() 如果OverlayWidgetController没有值 则创建并返回，有值 直接返回。</p>
+<p>初始化函数有了，调用时机呢？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="err">这个函数是后文</span> <span class="err">消息广播</span> <span class="err">定义的函数，在</span><span class="n">Controller初始化时</span> <span class="err">广播一次属性值</span>
+</span></span><span class="line"><span class="cl"><span class="err">总不能是空血条开局吧</span>
+</span></span><span class="line"><span class="cl"><span class="n">WidgetController</span><span class="o">-&gt;</span><span class="n">BroadcastInitialValues</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="err">这也是后文的函数，用来订阅</span> <span class="err">属性更改通知</span> <span class="err">的委托</span>
+</span></span><span class="line"><span class="cl"><span class="n">BindCallbacksToDependencies</span><span class="p">()</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraHUD</span><span class="o">::</span><span class="n">InitOverlay</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span> <span class="n">APlayerState</span><span class="o">*</span> <span class="n">PS</span><span class="p">,</span> <span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span> <span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">checkf</span><span class="p">(</span><span class="n">OverlayWidgetClass</span><span class="p">,</span><span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;OverlayWidgetClass uninitialized,fill out BP_AurhHUD&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="n">checkf</span><span class="p">(</span><span class="n">OverlayWidgetControllerClass</span><span class="p">,</span><span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;OverlayWidgetControllerClass uninitialized,fill out BP_AurhHUD&#34;</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">OverlayWidget</span> <span class="o">=</span> <span class="n">CreateWidget</span><span class="o">&lt;</span><span class="n">UAuraUserWidget</span><span class="o">&gt;</span><span class="p">(</span><span class="n">GetWorld</span><span class="p">(),</span> <span class="n">OverlayWidgetClass</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">FWidgetControllerParams</span> <span class="nf">WidgetControllerParams</span><span class="p">(</span><span class="n">PC</span><span class="p">,</span><span class="n">PS</span><span class="p">,</span><span class="n">ASC</span><span class="p">,</span><span class="n">AS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UOverlayWidgetController</span><span class="o">*</span> <span class="n">WidgetController</span> <span class="o">=</span> <span class="n">GetOverlayWidgetController</span><span class="p">(</span><span class="n">WidgetControllerParams</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">OverlayWidget</span><span class="o">-&gt;</span><span class="n">SetWidgetController</span><span class="p">(</span><span class="n">WidgetController</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">WidgetController</span><span class="o">-&gt;</span><span class="n">BroadcastInitialValues</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">OverlayWidget</span><span class="o">-&gt;</span><span class="n">AddToViewport</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="initoverlay">InitOverlay
+</h3><p>AAuraHUD::InitOverlay 是HUD公开出去的函数，是一切故事发生的入口.</p>
+<p>至此，HUD把UMG和WidgetController收集了起来. <br/>在HUD中通过 InitOverlay() 创建UMG、WidgetController，并且在创建现场就把UMG和WidgetController关联起来.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">OverlayWidget</span><span class="o">-&gt;</span><span class="n">SetWidgetController</span><span class="p">(</span><span class="n">WidgetController</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>只要调用对外公开的 InitOverlay() 函数，所有东西都能链接起来，那么 在哪里调用才合适？</p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/MVC_3.png"
+	width="1852"
+	height="784"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVC_3_hu18152629603704086337.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVC_3_hu14274391620215006641.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="236"
+		data-flex-basis="566px"
+	
+></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraCharacter</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">AController</span><span class="o">*</span> <span class="n">NewController</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">NewController</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Initi Ability Actor info For the Server;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">InitAbilityActorInfo</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AAuraCharacter</span><span class="o">::</span><span class="n">InitAbilityActorInfo</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AAuraPlayerState</span><span class="o">*</span> <span class="n">AuraPlayerState</span> <span class="o">=</span> <span class="n">GetPlayerState</span><span class="o">&lt;</span><span class="n">AAuraPlayerState</span><span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">check</span><span class="p">(</span><span class="n">AuraPlayerState</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">AuraPlayerState</span><span class="o">-&gt;</span><span class="n">GetAbilitySystemComponent</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">InitAbilityActorInfo</span><span class="p">(</span><span class="n">AuraPlayerState</span><span class="p">,</span><span class="k">this</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraAbilitySystemComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AbilitySystemComponent</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">AbilityInfoSet</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">AuraPlayerState</span><span class="o">-&gt;</span><span class="n">GetAttributeSet</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">AAuraPlayerController</span><span class="o">*</span> <span class="n">AuraPlayerController</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">AAuraPlayerController</span><span class="o">&gt;</span><span class="p">(</span><span class="n">GetController</span><span class="p">()))</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">AAuraHUD</span><span class="o">*</span> <span class="n">AuraHud</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">AAuraHUD</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AuraPlayerController</span><span class="o">-&gt;</span><span class="n">GetHUD</span><span class="p">()))</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">AuraHud</span><span class="o">-&gt;</span><span class="n">InitOverlay</span><span class="p">(</span><span class="n">AuraPlayerController</span><span class="p">,</span><span class="n">AuraPlayerState</span><span class="p">,</span><span class="n">AbilitySystemComponent</span><span class="p">,</span><span class="n">AttributeSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-ui-mvc-or-mvvm/MVC_5.png"
+	width="1729"
+	height="825"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVC_5_hu17518332531440333526.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVC_5_hu4305044633069425631.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="209"
+		data-flex-basis="502px"
+	
+></p>
+<p>最终如图所示，完成整个流程。</p>
+<p>Character::PossessedBy是入口，在这里获得 玩家控制器、玩家状态、技能组件、属性Set.<br/>初始化角色自己的GAS组件 的同时 ，传给HUD 让HUD也用用，<br/>HUD在创建Controller时，把 玩家控制器、玩家状态、技能组件、属性集 传给Controller，<br/>HUD在创建UMG时，把Controller 传给UMG.</p>
+<h2 id="消息广播">消息广播
+</h2><p>GAS对外公开有委托事件，当属性变化时 这个委托就会广播，Controller订阅GAS的广播 就可以在属性变化时 获得属性的最新值。</p>
+<p>当Controller被HUD初始化时，就要广播一次 用来初始化UMG里的内容，总不能开局血条是空的吧。</p>
+<p>UAuraWidgetController追加空函数，在OverlayWidgetController进行override.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">UFUNCTION(BlueprintCallable)
+</span></span><span class="line"><span class="cl">	virtual void BroadcastInitialValues(){};
+</span></span><span class="line"><span class="cl">	virtual void BindCallbacksToDependencies(){};
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>还要在OverlayWidgetController里面定义委托 和 委托变量</p>
+<p>OverlayWidgetController.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam</span><span class="p">(</span><span class="n">FOnAttributeChangedSignature</span><span class="p">,</span> <span class="kt">float</span><span class="p">,</span> <span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam</span><span class="p">(</span><span class="n">FMessageWidgetRowSignature</span><span class="p">,</span><span class="n">FUIWidgetRow</span><span class="p">,</span><span class="n">Row</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="err">——————————————————————————————————————————————————————————————————————————</span>
+</span></span><span class="line"><span class="cl"><span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintAssignable</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;GAS|Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">FOnAttributeChangedSignature</span> <span class="n">OnHealthChanged</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintAssignable</span><span class="p">,</span><span class="n">Category</span><span class="o">=</span><span class="s">&#34;GAS|Attributes&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">FOnAttributeChangedSignature</span> <span class="n">OnMaxHealthChanged</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UOverlayWidgetController</span><span class="o">::</span><span class="n">BroadcastInitialValues</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">UAuraAttributeSet</span><span class="o">*</span> <span class="n">AuraAttributeSet</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraAttributeSet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AttributeSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">OnHealthChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetHealth</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="n">OnMaxHealthChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxHealth</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">OnManaChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMana</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="n">OnMaxManaChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxMana</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">UOverlayWidgetController</span><span class="o">::</span><span class="n">BindCallbacksToDependencies</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">UAuraAttributeSet</span><span class="o">*</span> <span class="n">AuraAttributeSet</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">UAuraAttributeSet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AttributeSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnHealthChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnMaxHealthChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnManaChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">AuraAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">OnMaxManaChanged</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/gas-a-ui-mvc-or-mvvm/BP_1.png"
+	width="1680"
+	height="973"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/BP_1_hu14701120141916519622.png 480w, /p/gas-a-ui-mvc-or-mvvm/BP_1_hu1436418682063475812.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="172"
+		data-flex-basis="414px"
+	
+></p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/BP_2.png"
+	width="1136"
+	height="522"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/BP_2_hu14391769312458399243.png 480w, /p/gas-a-ui-mvc-or-mvvm/BP_2_hu401454109364638583.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="217"
+		data-flex-basis="522px"
+	
+></p>
+<h2 id="mvvm">MVVM
+</h2><p>GAS B系列使用MVVM框架更新UMG.</p>
+<p>(有一个漏掉的操作 → 没有手动调用一次广播，开局血条是空的，)</p>
+<p>ELMVVMPlayer.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">(</span><span class="n">BlueprintType</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">ELEMENTAL_III_API</span> <span class="nl">UELMVVMPlayer</span> <span class="p">:</span> <span class="k">public</span> <span class="n">UMVVMViewModelBase</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UFUNCTION</span><span class="p">(</span><span class="n">BlueprintCallable</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="n">SetMvvmParams</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span><span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl"><span class="k">protected</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">APlayerController</span><span class="o">&gt;</span> <span class="n">PlayerController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAbilitySystemComponent</span><span class="o">&gt;</span> <span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAttributeSet</span><span class="o">&gt;</span> <span class="n">AttributeSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">FieldNotify</span><span class="p">,</span><span class="n">Getter</span><span class="p">,</span><span class="n">Setter</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="n">Health</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">FieldNotify</span><span class="p">,</span><span class="n">Getter</span><span class="p">,</span><span class="n">Setter</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="n">MaxHealth</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">FieldNotify</span><span class="p">,</span><span class="n">Getter</span><span class="p">,</span><span class="n">Setter</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="n">Mana</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">FieldNotify</span><span class="p">,</span><span class="n">Getter</span><span class="p">,</span><span class="n">Setter</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="n">MaxMana</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">FieldNotify</span><span class="p">,</span><span class="n">Getter</span><span class="o">=</span><span class="n">GetIsBattleMode</span><span class="p">,</span><span class="n">Setter</span><span class="o">=</span><span class="n">SetIsBattleMode</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">bool</span> <span class="n">bIsBattleMode</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">FieldNotify</span><span class="p">,</span><span class="n">Getter</span><span class="p">,</span><span class="n">Setter</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">int32</span> <span class="n">KillNumber</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="nf">SetHealth</span><span class="p">(</span><span class="k">const</span> <span class="kt">float</span> <span class="n">Value</span><span class="p">)</span> <span class="p">{</span><span class="n">UE_MVVM_SET_PROPERTY_VALUE</span><span class="p">(</span><span class="n">Health</span><span class="p">,</span><span class="n">Value</span><span class="p">);}</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="nf">GetHealth</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">Health</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="nf">SetMaxHealth</span><span class="p">(</span><span class="k">const</span> <span class="kt">float</span> <span class="n">Value</span><span class="p">)</span> <span class="p">{</span><span class="n">UE_MVVM_SET_PROPERTY_VALUE</span><span class="p">(</span><span class="n">MaxHealth</span><span class="p">,</span><span class="n">Value</span><span class="p">);}</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="nf">GetMaxHealth</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">MaxHealth</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="nf">SetMana</span><span class="p">(</span><span class="k">const</span> <span class="kt">float</span> <span class="n">Value</span><span class="p">)</span> <span class="p">{</span><span class="n">UE_MVVM_SET_PROPERTY_VALUE</span><span class="p">(</span><span class="n">Mana</span><span class="p">,</span><span class="n">Value</span><span class="p">);}</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="nf">GetMana</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">Mana</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="nf">SetMaxMana</span><span class="p">(</span><span class="k">const</span> <span class="kt">float</span> <span class="n">Value</span><span class="p">)</span> <span class="p">{</span><span class="n">UE_MVVM_SET_PROPERTY_VALUE</span><span class="p">(</span><span class="n">MaxMana</span><span class="p">,</span><span class="n">Value</span><span class="p">);}</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">float</span> <span class="nf">GetMaxMana</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">MaxMana</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="nf">SetIsBattleMode</span><span class="p">(</span><span class="k">const</span> <span class="kt">bool</span> <span class="n">Value</span><span class="p">)</span> <span class="p">{</span><span class="n">UE_MVVM_SET_PROPERTY_VALUE</span><span class="p">(</span><span class="n">bIsBattleMode</span><span class="p">,</span><span class="n">Value</span><span class="p">);}</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">bool</span> <span class="nf">GetIsBattleMode</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">bIsBattleMode</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="nf">SetKillNumber</span><span class="p">(</span><span class="k">const</span> <span class="n">int32</span> <span class="n">Value</span><span class="p">)</span> <span class="p">{</span><span class="n">UE_MVVM_SET_PROPERTY_VALUE</span><span class="p">(</span><span class="n">KillNumber</span><span class="p">,</span><span class="n">Value</span><span class="p">);}</span>
+</span></span><span class="line"><span class="cl">	<span class="n">int32</span> <span class="nf">GetKillNumber</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span><span class="k">return</span> <span class="n">KillNumber</span><span class="p">;};</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>ELMVVMPlayer.cpp</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// AELCharacterBase::InitAbilityInfo ---&gt; AELHUD::InitMVVM ---&gt; ThisClass::SetMvvmParams
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="n">UELMVVMPlayer</span><span class="o">::</span><span class="n">SetMvvmParams</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span> <span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span> <span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PlayerController</span> <span class="o">=</span> <span class="n">PC</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">ASC</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">AS</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AELPlayerController</span><span class="o">*</span> <span class="n">ELPlayerController</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">AELPlayerController</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlayerController</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ELPlayerController</span><span class="o">-&gt;</span><span class="n">OnBattleModeChange</span><span class="p">.</span><span class="n">AddLambda</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="kt">bool</span> <span class="n">InBattleMode</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">SetIsBattleMode</span><span class="p">(</span><span class="n">InBattleMode</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">});</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="k">const</span> <span class="n">UELAttributeSet</span><span class="o">*</span> <span class="n">ELAttributeSet</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">UELAttributeSet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">AttributeSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">ELAttributeSet</span><span class="o">-&gt;</span><span class="n">GetHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span> <span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetHealth</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">ELAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxHealthAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span> <span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetMaxHealth</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">ELAttributeSet</span><span class="o">-&gt;</span><span class="n">GetManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span> <span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetMana</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">ELAttributeSet</span><span class="o">-&gt;</span><span class="n">GetMaxManaAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span> <span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetMaxMana</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span><span class="o">-&gt;</span><span class="n">GetGameplayAttributeValueChangeDelegate</span><span class="p">(</span><span class="n">ELAttributeSet</span><span class="o">-&gt;</span><span class="n">GetKillNumberAttribute</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="p">.</span><span class="n">AddLambda</span><span class="p">([</span><span class="k">this</span><span class="p">](</span> <span class="k">const</span> <span class="n">FOnAttributeChangeData</span><span class="o">&amp;</span> <span class="n">Data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">SetKillNumber</span><span class="p">(</span><span class="n">Data</span><span class="p">.</span><span class="n">NewValue</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">});</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>ELHUD.h</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">ELEMENTAL_III_API</span> <span class="nl">AELHUD</span> <span class="p">:</span> <span class="k">public</span> <span class="n">AHUD</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="kt">void</span> <span class="n">InitMvvm</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span><span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">APlayerController</span><span class="o">&gt;</span> <span class="n">PlayerController</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAbilitySystemComponent</span><span class="o">&gt;</span> <span class="n">AbilitySystemComponent</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">ACharacter</span><span class="o">&gt;</span> <span class="n">Character</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">TObjectPtr</span><span class="o">&lt;</span><span class="n">UAttributeSet</span><span class="o">&gt;</span> <span class="n">AttributeSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadWrite</span><span class="p">,</span> <span class="n">EditDefaultsOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FMVVMViewModelContext</span> <span class="n">MVVMContext</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">UPROPERTY</span><span class="p">(</span><span class="n">BlueprintReadOnly</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">class</span> <span class="nc">UELMVVMPlayer</span><span class="o">*</span> <span class="n">MVVMPlayer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>ELHUD.cpp</p>
+<p>在这里创建MvvmPlayer并且添加到Mvvm全局子系统里. UMG里根据Context从全局获取MvvmPlayer.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AELHUD</span><span class="o">::</span><span class="n">InitMvvm</span><span class="p">(</span><span class="n">APlayerController</span><span class="o">*</span> <span class="n">PC</span><span class="p">,</span><span class="n">UAbilitySystemComponent</span><span class="o">*</span> <span class="n">ASC</span><span class="p">,</span><span class="n">UAttributeSet</span><span class="o">*</span> <span class="n">AS</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AbilitySystemComponent</span> <span class="o">=</span> <span class="n">ASC</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">PlayerController</span> <span class="o">=</span> <span class="n">PC</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Character</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">ACharacter</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlayerController</span><span class="o">-&gt;</span><span class="n">GetPawn</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AttributeSet</span> <span class="o">=</span> <span class="n">AS</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">MVVMPlayer</span> <span class="o">=</span> <span class="n">NewObject</span><span class="o">&lt;</span><span class="n">UELMVVMPlayer</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PC</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UGameInstance</span><span class="o">*</span> <span class="n">GameInstance</span> <span class="o">=</span> <span class="n">UGameplayStatics</span><span class="o">::</span><span class="n">GetGameInstance</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">UMVVMGameSubsystem</span><span class="o">*</span> <span class="n">MvvmGameSubsystem</span> <span class="o">=</span> <span class="n">GameInstance</span><span class="o">-&gt;</span><span class="n">GetSubsystem</span><span class="o">&lt;</span><span class="n">UMVVMGameSubsystem</span><span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">MvvmGameSubsystem</span><span class="o">-&gt;</span><span class="n">GetViewModelCollection</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddViewModelInstance</span><span class="p">(</span><span class="n">MVVMContext</span><span class="p">,</span><span class="n">MVVMPlayer</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">MVVMPlayer</span><span class="o">-&gt;</span><span class="n">SetMvvmParams</span><span class="p">(</span><span class="n">PC</span><span class="p">,</span><span class="n">ASC</span><span class="p">,</span><span class="n">AS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>CharacterBase</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AELCharacterBase</span><span class="o">::</span><span class="n">InitAbilityInfo</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">AHUD</span><span class="o">*</span> <span class="n">HUD</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">AELPlayerController</span><span class="o">&gt;</span><span class="p">(</span><span class="n">GetController</span><span class="p">())</span><span class="o">-&gt;</span><span class="n">GetHUD</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">AELHUD</span><span class="o">*</span> <span class="n">ELHud</span> <span class="o">=</span> <span class="n">Cast</span><span class="o">&lt;</span><span class="n">AELHUD</span><span class="o">&gt;</span><span class="p">(</span><span class="n">HUD</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">ELHud</span><span class="o">-&gt;</span><span class="n">InitMvvm</span><span class="p">(</span><span class="n">Cast</span><span class="o">&lt;</span><span class="n">AELPlayerController</span><span class="o">&gt;</span><span class="p">(</span><span class="n">GetController</span><span class="p">()),</span><span class="n">AbilitySystemComponent</span><span class="p">,</span><span class="n">AttributeSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AELCharacterBase</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">AController</span><span class="o">*</span> <span class="n">NewController</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">Super</span><span class="o">::</span><span class="n">PossessedBy</span><span class="p">(</span><span class="n">NewController</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">InitAbilityInfo</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>调用顺序: <br/>AELCharacterBase::PossessedBy&mdash;&gt;AELCharacterBase::InitAbilityInfo &mdash;&gt; AELHUD::InitMVVM &mdash;&gt; UELMVVMPlayer::SetMvvmParams</p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/MVVM_1.png"
+	width="1571"
+	height="899"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVVM_1_hu838408627541654677.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVVM_1_hu10256039466102268234.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="174"
+		data-flex-basis="419px"
+	
+></p>
+<p><img src="/p/gas-a-ui-mvc-or-mvvm/MVVM_2.png"
+	width="1067"
+	height="885"
+	srcset="/p/gas-a-ui-mvc-or-mvvm/MVVM_2_hu10066337102261609558.png 480w, /p/gas-a-ui-mvc-or-mvvm/MVVM_2_hu11977343329676783983.png 1024w"
+	loading="lazy"
+	
+		alt="img"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="120"
+		data-flex-basis="289px"
+	
+></p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            国窖1573 - 
+        
+        2025 AKaKLya
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.29.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
