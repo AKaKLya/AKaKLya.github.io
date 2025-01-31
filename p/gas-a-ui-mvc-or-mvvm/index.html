@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="MVC 插播一条：UE5中 有一套MVVM插件 可以与UMG联动。创建MVVM对象，在这个对象里面创建一些变量什么的，当变量改变时 它自己就会发出广播通知 https://www.bilibili.com/video/BV1Dj411N735/ https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel 下面开始视频教程的内容： 将应用程序分为三个核心组件：模型（Model）、视图（View）和控制器（Controller），以实现关注点分离。 在这个系列课程中，使用这个架构来更新UMG， 玩家属性发生变化&mdash;&gt;通知Controller&mdash;&gt;Controller发出消息广播，UMG订阅Controller的消息广播，这样就把 玩家和UMG 联系起来了. 直观上看的话，也就是 玩家大喊一声“该更新了”，具体去更新谁，玩家并不关心。 在整个过程中，只关注一个中介者—Controller，需要更新自己数据的UMG界面 自己去订阅消息通知，变化事件发生时，Controller发出通知消息， UMG自己去查看是 生命值变化了，还是魔法值变化了，去做它自己该做的事情。 套用MVC模式，View = UMG，Model = 玩家属性，Controller就是这两个之间的中间件. Controller可以是一个UObject. (这里的Controller不是引擎中的 AI控制器 / 玩家控制器，只是一个U类对象) 这是最终要实现的结构，UMG内部需要Controller的指针，用来订阅Controller的消息， UMG和Controller都集中在HUD里面，HUD同时创建UMG、Controller，并且当场就把Controller与UMG 关联起来。 GameMode管理HUD，GameMode会自动创建HUD. 而HUD内部管理UMG、Controller，HUD对外公开一个函数，用来接收玩家相关的信息 以及 创建UMG、Controller 1 InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) 这个函数接收4个参数 用来获得玩家信息，只需要一个合适的时机调用这个HUD的函数，一切就能关联起来。 对于人类玩家角色来说，GAS相关组件都放在PlayerState里面，当角色死亡时 死的只是Actor 不是PlaeyrState，所以这些组件不会丢失角色的属性信息，角色复活时 就得重新获得PlayerState里面的GAS组件信息。复活 就可以视为是初始化了，游戏刚开始时，角色也算是“复活”，即调用 PossessedBy 函数，在PossessedBy 函数里面获得GAS信息的同时，就通知UI去更新信息。 这就是InitOverlay调用的时机，即在 PossessedBy 里面调用. PossessedBy 拿到 PC、PS、ASC、AS 之后 传给HUD::InitOverlay，让HUD拿着这些信息去构造Controller 有了这些指导思想，接下来的内容就容易看懂了. 整这么一大堆，其实就是 本来UMG能直接GetPlayerCharacter，Cast到AuraCharacter，角色身上的所有东西都能获取，GetPlayerState ，Cast到AuraPlayerState也能获取GAS组件。这已经可以运行了，只是多了一个中间件，原本是 角色&mdash;&gt;UMG，一站直达的， 现在需要 角色&ndash;&gt;中间件&mdash;&gt;UMG于是乎，就要想办法把这一串逻辑 重新打通，就仅此而已.">
 <title>GAS A - UI - MVC or MVVM</title>
 
-<link rel='canonical' href='https://akaklya.github.io/p/gas-a-ui-mvc-or-mvvm/'>
+<link rel='canonical' href='http://localhost:1313/p/gas-a-ui-mvc-or-mvvm/'>
 
 <link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - UI - MVC or MVVM">
 <meta property='og:description' content="MVC 插播一条：UE5中 有一套MVVM插件 可以与UMG联动。创建MVVM对象，在这个对象里面创建一些变量什么的，当变量改变时 它自己就会发出广播通知 https://www.bilibili.com/video/BV1Dj411N735/ https://dev.epicgames.com/documentation/zh-cn/unreal-engine/umg-viewmodel 下面开始视频教程的内容： 将应用程序分为三个核心组件：模型（Model）、视图（View）和控制器（Controller），以实现关注点分离。 在这个系列课程中，使用这个架构来更新UMG， 玩家属性发生变化&mdash;&gt;通知Controller&mdash;&gt;Controller发出消息广播，UMG订阅Controller的消息广播，这样就把 玩家和UMG 联系起来了. 直观上看的话，也就是 玩家大喊一声“该更新了”，具体去更新谁，玩家并不关心。 在整个过程中，只关注一个中介者—Controller，需要更新自己数据的UMG界面 自己去订阅消息通知，变化事件发生时，Controller发出通知消息， UMG自己去查看是 生命值变化了，还是魔法值变化了，去做它自己该做的事情。 套用MVC模式，View = UMG，Model = 玩家属性，Controller就是这两个之间的中间件. Controller可以是一个UObject. (这里的Controller不是引擎中的 AI控制器 / 玩家控制器，只是一个U类对象) 这是最终要实现的结构，UMG内部需要Controller的指针，用来订阅Controller的消息， UMG和Controller都集中在HUD里面，HUD同时创建UMG、Controller，并且当场就把Controller与UMG 关联起来。 GameMode管理HUD，GameMode会自动创建HUD. 而HUD内部管理UMG、Controller，HUD对外公开一个函数，用来接收玩家相关的信息 以及 创建UMG、Controller 1 InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) 这个函数接收4个参数 用来获得玩家信息，只需要一个合适的时机调用这个HUD的函数，一切就能关联起来。 对于人类玩家角色来说，GAS相关组件都放在PlayerState里面，当角色死亡时 死的只是Actor 不是PlaeyrState，所以这些组件不会丢失角色的属性信息，角色复活时 就得重新获得PlayerState里面的GAS组件信息。复活 就可以视为是初始化了，游戏刚开始时，角色也算是“复活”，即调用 PossessedBy 函数，在PossessedBy 函数里面获得GAS信息的同时，就通知UI去更新信息。 这就是InitOverlay调用的时机，即在 PossessedBy 里面调用. PossessedBy 拿到 PC、PS、ASC、AS 之后 传给HUD::InitOverlay，让HUD拿着这些信息去构造Controller 有了这些指导思想，接下来的内容就容易看懂了. 整这么一大堆，其实就是 本来UMG能直接GetPlayerCharacter，Cast到AuraCharacter，角色身上的所有东西都能获取，GetPlayerState ，Cast到AuraPlayerState也能获取GAS组件。这已经可以运行了，只是多了一个中间件，原本是 角色&mdash;&gt;UMG，一站直达的， 现在需要 角色&ndash;&gt;中间件&mdash;&gt;UMG于是乎，就要想办法把这一串逻辑 重新打通，就仅此而已.">
-<meta property='og:url' content='https://akaklya.github.io/p/gas-a-ui-mvc-or-mvvm/'>
+<meta property='og:url' content='http://localhost:1313/p/gas-a-ui-mvc-or-mvvm/'>
 <meta property='og:site_name' content='AKaKLya'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-11T11:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-11T11:59:56&#43;08:00'/>
 <meta name="twitter:title" content="GAS A - UI - MVC or MVVM">
@@ -1412,7 +1412,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0f4e44504cf40ab34cf124bb8fa71a5615b897b6d3841a1d2857b604319620c7.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');
