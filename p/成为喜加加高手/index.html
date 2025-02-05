@@ -3851,7 +3851,7 @@ init表示 一个初始的东西，它可能是一个值，也可能是个其他
 </div>
 </div><h4 id="继承关系">继承关系
 </h4><p><strong>CRTP</strong></p>
-<p>CRTP（Curiously Recurring Template Pattern，奇特递归模板模式）是一种C++编程技术，通过使用模板和继承来实现静态多态性。与传统的运行时多态（通过虚函数实现）不同，CRTP可以在编译时进行优化，从而提高性能。</p>
+<p>CRTP（Curiously Recurring Template Pattern，奇特递归模板模式）是一种C++编程技术，通过使用模板和继承来实现静态多态性。<br/>与传统的运行时多态（通过虚函数实现）不同，CRTP可以在编译时进行优化，从而提高性能。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -3963,7 +3963,14 @@ init表示 一个初始的东西，它可能是一个值，也可能是个其他
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>C++23</p>
+</div><p>这里的关键点在于派生类Derived在定义时将自己作为模板参数传递给了基类Base。<br/>这样做的好处是可以让基类访问到派生类的成员，同时保持一定的抽象层次和代码复用。</p>
+<p><strong>实现机制</strong></p>
+<ol>
+<li><strong>静态绑定</strong>：由于所有操作都在编译期确定，因此避免了虚函数调用带来的间接性和开销。CRTP允许基类调用派生类的方法或访问其数据成员，而不需要通过虚函数表（vtable）。</li>
+<li><strong>类型识别</strong>：在CRTP中，基类通过模板参数知道它是为哪个具体的派生类实例化的。这使得基类可以根据不同的派生类提供不同的行为，而这些行为在编译期就已经确定。</li>
+<li><strong>接口扩展与策略模式</strong>：除了实现静态多态外，CRTP还常用于接口扩展和策略模式的实现。例如，可以为一个类添加额外的功能而不修改其原始定义。</li>
+</ol>
+<p>C++23</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
