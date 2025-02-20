@@ -401,7 +401,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 34 分钟
+                    阅读时长: 35 分钟
                 </time>
             </div>
         
@@ -2132,27 +2132,19 @@
 </div>
 </div><p><strong>POD</strong></p>
 <p>根据C++标准，POD类型必须满足以下条件：</p>
-<ol>
-<li><strong>平凡的默认构造函数（Trivial Default Constructor）</strong>：</li>
-</ol>
+<p><strong>平凡的默认构造函数（Trivial Default Constructor）</strong>：</p>
 <ul>
 <li>类型没有用户定义的默认构造函数，或者它的默认构造函数是平凡的（即编译器生成的默认构造函数）。</li>
 </ul>
-<ol>
-<li><strong>平凡的析构函数（Trivial Destructor）</strong>：</li>
-</ol>
+<p><strong>平凡的析构函数（Trivial Destructor）</strong>：</p>
 <ul>
 <li>类型没有用户定义的析构函数，或者它的析构函数是平凡的（即编译器生成的析构函数）。</li>
 </ul>
-<ol>
-<li><strong>平凡的拷贝/移动操作（Trivial Copy/Move Operations）</strong>：</li>
-</ol>
+<p><strong>平凡的拷贝/移动操作（Trivial Copy/Move Operations）</strong>：</p>
 <ul>
 <li>类型没有用户定义的拷贝构造函数、拷贝赋值运算符、移动构造函数或移动赋值运算符，或者这些操作是平凡的（即编译器生成的操作）。</li>
 </ul>
-<ol>
-<li><strong>标准布局（Standard Layout）</strong>：</li>
-</ol>
+<p><strong>标准布局（Standard Layout）</strong>：</p>
 <ul>
 <li>
 <p>类型的所有非静态数据成员都具有相同的访问控制（public, protected, private），并且基类和非静态数据成员不能有虚函数或虚基类。</p>
@@ -2339,7 +2331,7 @@
 </span><span class="lnt">21
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="err">当</span><span class="n">TArray存放需要显式析构的类型时</span><span class="err">（即非平凡可析构类型，如拥有自定义析构函数的类），</span>
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="err">当</span> <span class="n">TArray</span> <span class="err">存放需要显式析构的类型时（即非平凡可析构类型，如拥有自定义析构函数的类），</span>
 </span></span><span class="line"><span class="cl"><span class="err">会调用第二个版本的</span><span class="n">DestructItems</span><span class="err">，从而逐个调用元素的析构函数。</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="err">调用第一个空实现的</span><span class="n">DestructItems的影响</span><span class="err">：</span>
@@ -2362,7 +2354,135 @@
 </span></span><span class="line"><span class="cl"><span class="err">存放</span><span class="n">Obj2</span><span class="o">*</span><span class="err">指针（</span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj2</span><span class="o">*&gt;</span><span class="err">）：调用第一个版本，指针自身无需析构。</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><h3 id="总结-2">总结
+</div><p><strong>详情举例</strong></p>
+<p><strong>有自定义析构函数:</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Obj</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="o">~</span><span class="n">Obj</span><span class="p">()</span> <span class="p">{}</span> <span class="c1">// 自定义析构函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Obj</span> <span class="n">o1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj</span><span class="o">&gt;</span> <span class="n">Array</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Array</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">o1</span><span class="p">);</span> <span class="c1">// 存储的是o1的副本
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span> <span class="c1">// Array析构时调用副本的析构函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">o1</span><span class="p">.</span><span class="n">a</span><span class="p">;</span> <span class="c1">// 输出3（原对象未被析构）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>无自定义析构函数:</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Obj</span> <span class="p">{</span><span class="c1">// 平凡类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span> 
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Obj</span> <span class="n">o1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj</span><span class="o">&gt;</span> <span class="n">Array</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Array</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">o1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="c1">// 不调用任何析构
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">o1</span><span class="p">.</span><span class="n">a</span><span class="p">;</span> <span class="c1">// 输出3
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>常见误解澄清:</strong></p>
+<ol>
+<li><strong>副本原则</strong>：<code>Array.Add(o1)</code> 永远存储的是原对象的<strong>独立副本</strong></li>
+<li><strong>生命周期分离</strong>：
+<ul>
+<li>原对象：由声明作用域决定</li>
+<li>容器内对象：由容器生命周期决定</li>
+</ul>
+</li>
+<li><strong>指针类型的特殊性</strong>：</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj</span><span class="o">*&gt;</span> <span class="n">PtrArray</span><span class="p">;</span> <span class="c1">// 存储的是指针值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="o">~</span><span class="n">TArray</span><span class="p">()</span> <span class="c1">//仅释放指针占用的内存，不会delete指向的对象
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj</span><span class="o">*&gt;</span> <span class="n">PtrArray</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">PtrArray</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">Obj</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="n">PtrArray</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">Obj</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">+-------------------+</span>      <span class="o">+---------&gt;</span> <span class="p">[</span><span class="n">Obj</span> <span class="n">instance</span> <span class="mi">1</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">|</span> <span class="n">PtrArray</span> <span class="err">内存块</span>     <span class="o">|</span>     <span class="o">|</span>
+</span></span><span class="line"><span class="cl"><span class="o">|</span> <span class="mh">0x1234</span><span class="o">:</span> <span class="n">Obj</span><span class="o">*</span> <span class="n">ptr1</span>  <span class="o">|-----+</span>
+</span></span><span class="line"><span class="cl"><span class="o">|</span> <span class="mh">0x1238</span><span class="o">:</span> <span class="n">Obj</span><span class="o">*</span> <span class="n">ptr2</span>  <span class="o">|----------+</span>
+</span></span><span class="line"><span class="cl"><span class="o">+-------------------+</span>           <span class="o">|</span>
+</span></span><span class="line"><span class="cl">                                <span class="n">v</span>
+</span></span><span class="line"><span class="cl">                             <span class="p">[</span><span class="n">Obj</span> <span class="n">instance</span> <span class="mi">2</span><span class="p">]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><strong>释放的是指针存储空间</strong>：即0x1234-0x1238的内存区域</li>
+<li><strong>不触及指向对象</strong>：0x1234和0x1238存储的地址值被丢弃，但对应Obj实例仍在堆中</li>
+</ul>
+<p><strong>析构总结:</strong></p>
+<ol>
+<li><strong>条件析构优化</strong>：通过 <code>std::is_trivially_destructible</code> 特征判断</li>
+<li><strong>性能考量</strong>：避免对简单类型执行不必要的析构操作</li>
+<li><strong>类型安全</strong>：强制要求资源管理类必须正确实现析构</li>
+</ol>
+<h3 id="总结-2">总结
 </h3><div class="table-wrapper"><table>
 <thead>
 <tr>
@@ -2527,8 +2647,8 @@
 </div>
 </div><h4 id="movetempifpossible-右值引用"><code>MoveTempIfPossible</code> 右值引用
 </h4><ul>
-<li><strong>参数</strong> <code>**T&amp;&amp; Obj**</code>：使用了通用引用（universal reference），可以接受左值引用或右值引用。</li>
-<li><strong>返回类型</strong> <code>**std::remove_reference_t&lt;T&gt;&amp;&amp;**</code>：移除 <code>T</code> 的引用属性后将其转换为右值引用。</li>
+<li><strong>参数</strong> <code>T&amp;&amp; Obj</code> ：使用了通用引用（universal reference），可以接受左值引用或右值引用。</li>
+<li><strong>返回类型</strong> <code>std::remove_reference_t&lt;T&gt;&amp;&amp;</code>：移除 <code>T</code> 的引用属性后将其转换为右值引用。</li>
 </ul>
 <p>将一个引用转换为右值引用（rvalue reference）， 这是 UE 中 <code>std::move</code> 的等价实现。</p>
 <p>与 <code>MoveTemp</code> 不同，它不会进行静态断言，因此在模板或宏中使用时更加灵活，不会中断编译。</p>
@@ -2940,23 +3060,17 @@
 <li><strong>参数</strong> <code>**Predicate**</code>：一个谓词对象，用于判断某个元素是否需要被移除。</li>
 <li><strong>返回值</strong> <code>**SizeType**</code>：返回被移除的元素数量。</li>
 </ul>
-<ol>
-<li><strong>获取原始数组大小</strong>：</li>
-</ol>
+<p><strong>获取原始数组大小</strong>：</p>
 <ul>
 <li>如果数组为空，直接返回 0。</li>
 </ul>
-<ol>
-<li><strong>初始化变量</strong>：</li>
-</ol>
+<p><strong>初始化变量</strong>：</p>
 <ul>
 <li>获取数组数据指针 <code>Data</code>。</li>
 <li>初始化读取索引 <code>ReadIndex</code> 和写入索引 <code>WriteIndex</code>。</li>
 <li>根据第一个元素的状态初始化 <code>bNotMatch</code> 变量。</li>
 </ul>
-<ol>
-<li><strong>遍历数组</strong>：</li>
-</ol>
+<p><strong>遍历数组</strong>：</p>
 <ul>
 <li>使用 <code>do...while</code> 循环遍历数组，每次处理一段连续的匹配或非匹配元素段（运行）。</li>
 <li><strong>内层循环</strong>：找到一段连续的匹配或非匹配元素。</li>
@@ -2964,15 +3078,11 @@
 <li><strong>处理匹配运行</strong>：销毁这些元素。</li>
 <li>切换 <code>bNotMatch</code> 的值，准备处理下一个运行。</li>
 </ul>
-<ol>
-<li><strong>更新数组大小</strong>：</li>
-</ol>
+<p><strong>更新数组大小</strong>：</p>
 <ul>
 <li>更新数组的有效元素数量 <code>ArrayNum</code> 为 <code>WriteIndex</code>。</li>
 </ul>
-<ol>
-<li><strong>返回结果</strong>：</li>
-</ol>
+<p><strong>返回结果</strong>：</p>
 <ul>
 <li>返回被移除的元素数量。</li>
 </ul>
@@ -3397,15 +3507,8 @@
 <p>并且把TLess&lt;&gt;存到一个Predicate变量里面。</p>
 <p><code>TD</code> 也重载了()运算符，在里面执行Predicate的()运算符，</p>
 <p>此时Predicate是TLess&lt;&gt;类型，所以</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">TD(A,B)`-&gt;`TLess(A,B)`-&gt;`比大小
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>那么A和B是从哪来的？再深入分析下去就看不懂了</p>
+<p><code>TD(A,B)</code>-&gt;<code>TLess(A,B)</code>-&gt;<code>比大小</code></p>
+<p>那么A和B是从哪来的？再深入分析下去就看不懂了</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -3455,7 +3558,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">Algo::Sort(ArrayInt, TLess&lt;&gt;());
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">Algo</span><span class="o">::</span><span class="n">Sort</span><span class="p">(</span><span class="n">ArrayInt</span><span class="p">,</span> <span class="n">TLess</span><span class="o">&lt;&gt;</span><span class="p">());</span>
 </span></span></code></pre></td></tr></table>
 </div>
 </div><ul>
@@ -3471,7 +3574,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">Algo::Sort(ArrayInt, TDereferenceWrapper&lt;ElementType, TLess&lt;&gt;&gt;(TLess&lt;&gt;()));
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">Algo</span><span class="o">::</span><span class="n">Sort</span><span class="p">(</span><span class="n">ArrayInt</span><span class="p">,</span> <span class="n">TDereferenceWrapper</span><span class="o">&lt;</span><span class="n">ElementType</span><span class="p">,</span> <span class="n">TLess</span><span class="o">&lt;&gt;&gt;</span><span class="p">(</span><span class="n">TLess</span><span class="o">&lt;&gt;</span><span class="p">()));</span>
 </span></span></code></pre></td></tr></table>
 </div>
 </div><ul>
@@ -3558,17 +3661,8 @@
 <p>到此就真相大白了，原来是这么设计的，</p>
 <p>在编译时就根据TArray存放的数据类型 选择合适的模板类进行排序。</p>
 <p>根据 指针类型/非指针类型，TDereferenceWrapper从下面的两条路径里选择:</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">TD(A,B)`-&gt;`TLess(A,B)`-&gt;`比大小
-</span></span><span class="line"><span class="cl">TD(*A,*B)`-&gt;`TLess(A,B)`-&gt;`比大小
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="find">Find
+<p><code>TD(A,B)</code> &mdash;&gt;<code>TLess(A,B)</code>&mdash;&gt; <code>比大小 TD(*A,*B)</code> &mdash;&gt; <code>TLess(A,B)</code>&mdash;&gt;<code>比大小</code></p>
+<h3 id="find">Find
 </h3><p>两个版本，</p>
 <p>1.传入元素和索引，判断 索引处的元素 = 传入的元素</p>
 <p>2.传入元素，遍历查找</p>
