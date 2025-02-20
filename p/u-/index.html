@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+    <head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在 UE 中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果 更新的变量值 与 旧CDO中的值 相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。">
 <title>U&#43;&#43;</title>
 
-<link rel='canonical' href='http://localhost:1313/p/u-/'>
+<link rel='canonical' href='https://akaklya.github.io/p/u-/'>
 
 <link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="U++">
 <meta property='og:description' content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在 UE 中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果 更新的变量值 与 旧CDO中的值 相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。">
-<meta property='og:url' content='http://localhost:1313/p/u-/'>
+<meta property='og:url' content='https://akaklya.github.io/p/u-/'>
 <meta property='og:site_name' content='AKaKLya'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2000-01-20T20:37:57&#43;08:00'/><meta property='article:modified_time' content='2000-01-20T20:37:57&#43;08:00'/>
 <meta name="twitter:title" content="U++">
@@ -1668,7 +1668,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.0f4e44504cf40ab34cf124bb8fa71a5615b897b6d3841a1d2857b604319620c7.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');
