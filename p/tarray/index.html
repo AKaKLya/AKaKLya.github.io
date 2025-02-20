@@ -2308,6 +2308,60 @@
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
+</div><p><strong>TArray存放的 对象类型 与 析构时DestructItems</strong>:</p>
+<ul>
+<li>**平凡类型（<code>int</code>、<code>float</code>、原始指针等）**触发空实现，无额外操作。</li>
+<li>**非平凡类型（如含资源的类）**触发显式析构，确保资源释放。</li>
+<li><strong>指针类型</strong>始终触发空实现，需手动管理指向的内存。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="err">当</span><span class="n">TArray存放需要显式析构的类型时</span><span class="err">（即非平凡可析构类型，如拥有自定义析构函数的类），</span>
+</span></span><span class="line"><span class="cl"><span class="err">会调用第二个版本的</span><span class="n">DestructItems</span><span class="err">，从而逐个调用元素的析构函数。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">调用第一个空实现的</span><span class="n">DestructItems的影响</span><span class="err">：</span>
+</span></span><span class="line"><span class="cl"><span class="err">对于平凡可析构类型（如</span><span class="kt">int</span><span class="err">、</span><span class="kt">float</span><span class="err">、指针等），这是安全的，因为它们无需显式析构。</span>
+</span></span><span class="line"><span class="cl"><span class="err">但如果错误地应用于非平凡类型（如资源持有类），会导致资源泄漏，因为析构函数未被调用。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">存放</span> <span class="kt">int</span><span class="err">、</span><span class="n">float等基础类型</span> <span class="err">时：</span>
+</span></span><span class="line"><span class="cl"><span class="err">调用第一个版本的</span><span class="n">DestructItems</span><span class="err">，因为它们属于平凡可析构类型。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">存放</span> <span class="kt">int</span><span class="o">*</span><span class="err">、</span><span class="kt">float</span><span class="o">*</span><span class="err">指针</span> <span class="err">时：</span>
+</span></span><span class="line"><span class="cl"><span class="err">同样调用第一个版本，指针类型自身是平凡可析构的。注意指针指向的内存不会被自动释放。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">存放</span> <span class="err">有析构函数的类</span><span class="n">Obj</span> <span class="err">时：</span>
+</span></span><span class="line"><span class="cl"><span class="err">存放</span><span class="n">Obj对象</span><span class="err">（</span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj</span><span class="o">&gt;</span><span class="err">）：</span><span class="n">Obj非平凡可析构</span><span class="err">，调用第二个版本，显式析构每个元素。</span>
+</span></span><span class="line"><span class="cl"><span class="err">存放</span><span class="n">Obj</span><span class="o">*</span><span class="err">指针（</span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj</span><span class="o">*&gt;</span><span class="err">）：指针类型平凡可析构，调用第一个版本，不析构指针指向的对象。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">存放</span> <span class="err">无析构函数的类</span><span class="n">Obj2</span> <span class="err">时：</span>
+</span></span><span class="line"><span class="cl"><span class="err">存放</span><span class="n">Obj2对象</span><span class="err">（</span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj2</span><span class="o">&gt;</span><span class="err">）：若</span><span class="n">Obj2及其成员均为平凡类型</span><span class="err">，调用第一个版本；</span>
+</span></span><span class="line"><span class="cl"><span class="err">则（如含非平凡成员），调用第二个版本。</span>
+</span></span><span class="line"><span class="cl"><span class="err">存放</span><span class="n">Obj2</span><span class="o">*</span><span class="err">指针（</span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">Obj2</span><span class="o">*&gt;</span><span class="err">）：调用第一个版本，指针自身无需析构。</span>
+</span></span></code></pre></td></tr></table>
+</div>
 </div><h3 id="总结-2">总结
 </h3><div class="table-wrapper"><table>
 <thead>
