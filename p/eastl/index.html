@@ -3196,15 +3196,8 @@
 <p><code>eastl::exchange(mPair.first(), pValue)</code> 交换两个指针，</p>
 <p>假设 <code>unique_ptr</code> 保存的有效指针 <code>unique_ptr -&gt; ptr</code> 为 <code>指针A</code>.</p>
 <p>1.把 <code>unique_ptr</code> 里面保存的 <code>指针A</code> 与 nullptr 交换，此时 unique_ptr保存的是 nullptr.</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">unique_ptr -&gt; ptr` = `nullptr
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p><code>first</code>= <code>指针A</code> ，</p>
+<p><code>unique_ptr -&gt; ptr = nullptr</code></p>
+<p><code>first</code>= <code>指针A</code> ，</p>
 <p>2.<code>get_deleter()</code> 取出删除器.</p>
 <p>删除器有两种，<code>default_delete&lt;T&gt;</code> <code>default_delete&lt;T[]&gt;</code> 分别是删除普通对象 和 删除数组对象.</p>
 <p>3.调用 <code>删除器</code> 的 <code>()运算符重载</code>，把 <code>first</code> 作为参数传递进去. 这个重载运算符将调用delete 删除 <code>first</code>.</p>
