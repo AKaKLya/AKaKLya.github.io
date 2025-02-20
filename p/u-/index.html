@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在虚幻引擎4（UE4）中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果更新的变量值与旧CDO中的值相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。 因为构造函数是在引擎和对象自身的初始化早期阶段调用的，你不应该在其中执行任何游戏逻辑代码，否则很可能会导致崩溃。你应该使用类中的其他事件，如PostInitProperties（在蓝图系统对对象所做的更改应用后调用）、PostInitComponents（在Actor中的组件被初始化后调用）或BeginPlay（当Actor被完全初始化时）。请注意，前两个事件也在你将Actor放置在关卡编辑器时被调用。 总结来说，CDO的主要作用是在引擎中保持类的默认状态，使得即使是在C++中，也可以方便地获取到类的默认属性和行为。由于CDO是在引擎初始化期间创建的，因此在这个时候调用构造函数可能会导致不稳定的行为，所以开发者应该避免在构造函数中进行依赖于其他尚未初始化对象的操作。 反射宏 其实 GENERATED_BODY 与GENERATED_UCLASS_BODY的区别在于：GENERATED_BODY声明并定义 了一个接收 const FObjectInitializer&amp; 的构造函数，GENERATED_UCLASS_BODY只声明 了该构造函数，需要用户自己提供一个定义。">
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在 UE 中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果 更新的变量值 与 旧CDO中的值 相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。">
 <title>U&#43;&#43;</title>
 
 <link rel='canonical' href='http://localhost:1313/p/u-/'>
 
 <link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="U++">
-<meta property='og:description' content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在虚幻引擎4（UE4）中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果更新的变量值与旧CDO中的值相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。 因为构造函数是在引擎和对象自身的初始化早期阶段调用的，你不应该在其中执行任何游戏逻辑代码，否则很可能会导致崩溃。你应该使用类中的其他事件，如PostInitProperties（在蓝图系统对对象所做的更改应用后调用）、PostInitComponents（在Actor中的组件被初始化后调用）或BeginPlay（当Actor被完全初始化时）。请注意，前两个事件也在你将Actor放置在关卡编辑器时被调用。 总结来说，CDO的主要作用是在引擎中保持类的默认状态，使得即使是在C++中，也可以方便地获取到类的默认属性和行为。由于CDO是在引擎初始化期间创建的，因此在这个时候调用构造函数可能会导致不稳定的行为，所以开发者应该避免在构造函数中进行依赖于其他尚未初始化对象的操作。 反射宏 其实 GENERATED_BODY 与GENERATED_UCLASS_BODY的区别在于：GENERATED_BODY声明并定义 了一个接收 const FObjectInitializer&amp; 的构造函数，GENERATED_UCLASS_BODY只声明 了该构造函数，需要用户自己提供一个定义。">
+<meta property='og:description' content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在 UE 中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果 更新的变量值 与 旧CDO中的值 相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。">
 <meta property='og:url' content='http://localhost:1313/p/u-/'>
 <meta property='og:site_name' content='AKaKLya'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2000-01-20T20:37:57&#43;08:00'/><meta property='article:modified_time' content='2000-01-20T20:37:57&#43;08:00'/>
 <meta name="twitter:title" content="U++">
-<meta name="twitter:description" content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在虚幻引擎4（UE4）中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果更新的变量值与旧CDO中的值相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。 因为构造函数是在引擎和对象自身的初始化早期阶段调用的，你不应该在其中执行任何游戏逻辑代码，否则很可能会导致崩溃。你应该使用类中的其他事件，如PostInitProperties（在蓝图系统对对象所做的更改应用后调用）、PostInitComponents（在Actor中的组件被初始化后调用）或BeginPlay（当Actor被完全初始化时）。请注意，前两个事件也在你将Actor放置在关卡编辑器时被调用。 总结来说，CDO的主要作用是在引擎中保持类的默认状态，使得即使是在C++中，也可以方便地获取到类的默认属性和行为。由于CDO是在引擎初始化期间创建的，因此在这个时候调用构造函数可能会导致不稳定的行为，所以开发者应该避免在构造函数中进行依赖于其他尚未初始化对象的操作。 反射宏 其实 GENERATED_BODY 与GENERATED_UCLASS_BODY的区别在于：GENERATED_BODY声明并定义 了一个接收 const FObjectInitializer&amp; 的构造函数，GENERATED_UCLASS_BODY只声明 了该构造函数，需要用户自己提供一个定义。">
+<meta name="twitter:description" content="https://ue5wiki.com/ UObject 反射系统 反射文档 反射知识库 C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在 UE 中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。 UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。反射系统注册表中的每个元素都有一个对应的 UField 对象被创建，用来表示代码中的事物并存储有关它的信息。每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象 CDO 它的主要功能是存储类对象的默认状态并保存默认变量状态。在 C++ 中创建的每个标有 UCLASS() 的 UObject 类都会注册到反射系统。 在C++创建一个Actor &ndash;&gt; AXActor，int32 K = 1 , 但是在构造函数里重新赋值 K=2，那么它的默认对象(CDO)的值就是2， 1 2 3 4 UClass* XActor = AXActorStaticClass(); Uobject* XAObj = XActor-&gt;GetDefaultObject(); AXACtor* CDO = Cast&lt;AXActor&gt;(XAObj); //CDO-&gt;K 得到的值是2 1 StaticClass&lt;UObject&gt;` 或者 `UObject::StaticClass() 当UClass的 类默认对象（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。对于给定Object实例，如果 更新的变量值 与 旧CDO中的值 相匹配，则将更新为它在新CDO中保存的值。如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。 例如，假设你在一个关卡中放置了多个 AEnemy Object并保存，然后将 AEnemy 构造函数中的默认Health值设置为100。再假设将Enemy_3的Health值设置为500，因为它们特别难对付。现在，假设你改变注意了，将Health的默认值增加到150。下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有AEnemy实例更新为使用Health值150。Enemy_3的Health将保持在500，因为它不使用旧的默认值。">
   
 
 
@@ -255,11 +255,22 @@
         <li><a href="#反射宏">反射宏</a></li>
       </ol>
     </li>
+    <li><a href="#核心">核心</a>
+      <ol>
+        <li><a href="#容器">容器</a>
+          <ol>
+            <li><a href="#tarray">TArray</a></li>
+          </ol>
+        </li>
+        <li><a href="#委托">委托</a></li>
+      </ol>
+    </li>
     <li><a href="#乱七八糟">乱七八糟</a>
       <ol>
         <li><a href="#log">Log</a></li>
         <li><a href="#私有变量访问">私有变量访问</a></li>
         <li><a href="#私有函数访问">私有函数访问</a></li>
+        <li><a href="#替换为空函数">替换为空函数</a></li>
       </ol>
     </li>
   </ol>
@@ -318,7 +329,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 4 分钟
+                    阅读时长: 8 分钟
                 </time>
             </div>
         
@@ -340,7 +351,7 @@
 </h3><p><a class="link" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/reflection-system-in-unreal-engine"  target="_blank" rel="noopener"
     >反射文档</a>    <a class="link" href="https://ue5wiki.com/wiki/12624/"  target="_blank" rel="noopener"
     >反射知识库</a></p>
-<p>C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。在虚幻引擎4（UE4）中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。</p>
+<p>C++ 编译为 CPU 机器码，而 CPU 并不了解类或变量的概念。<br/>类只是为编译器提供如何设置 CPU 代码的信息，变量最终只转化为内存地址，因此CPU并不知道类的存在，这些信息是由软件自身来跟踪的。<br/>在 UE 中，这是通过反射系统实现的，所以你的代码可以“反映”其自身。</p>
 <p>UE4 拥有一个特别的工具叫做 UnrealHeaderTool，它收集你创建的那些宏，比如 UPROPERTY、UCLASS、USTRUCT，并生成额外的 C++ 代码，这些代码将类、函数和属性注册到反射系统中，这样引擎就能识别这些元素并跟踪它们。<br/>反射系统注册表中的每个元素都有一个对应的 <a class="link" href="https://docs.unrealengine.com/5.1/en-US/API/Runtime/CoreUObject/UObject/UField/"  target="_blank" rel="noopener"
     >UField </a> 对象被创建，用来表示代码中的事物并存储有关它的信息。<br/>每个UObject类都有一个UClass对象，你可以通过调用GetClass()或StaticClass()来获取这个对象</p>
 <h3 id="cdo">CDO
@@ -369,7 +380,7 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><hr>
-<p>当<code>UClass</code>的 <strong>类默认对象</strong>（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。<br/>对于给定Object实例，如果更新的变量值与旧CDO中的值相匹配，则将更新为它在新CDO中保存的值。<br/>如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。</p>
+<p>当<code>UClass</code>的 <strong>类默认对象</strong>（CDO）更改，引擎将尝试在加载类的所有实例时对这些实例应用这些更改。<br/>对于给定Object实例，如果 <strong>更新的变量值</strong> 与 <strong>旧CDO中的值</strong> 相匹配，则将更新为它在<strong>新CDO中保存的值</strong>。<br/>如果变量包含任何其他值，系统会假设这个值是故意设置的，这些更改将会被保留。</p>
 <p>例如，假设你在一个关卡中放置了多个 <code>AEnemy</code> Object并保存，然后将 <code>AEnemy</code> 构造函数中的默认Health值设置为100。<br/>再假设将Enemy_3的Health值设置为500，因为它们特别难对付。<br/>现在，假设你改变注意了，将Health的默认值增加到150。<br/>下次加载关卡时，虚幻意识到你更改了CDO，并将使用旧默认Health值（100）的所有<code>AEnemy</code>实例更新为使用Health值150。<br/>Enemy_3的Health将保持在500，因为它不使用旧的默认值。</p>
 <hr>
 <p>因为构造函数是在引擎和对象自身的初始化早期阶段调用的，你不应该在其中执行任何游戏逻辑代码，否则很可能会导致崩溃。<br/>你应该使用类中的其他事件，如PostInitProperties（在蓝图系统对对象所做的更改应用后调用）、PostInitComponents（在Actor中的组件被初始化后调用）或BeginPlay（当Actor被完全初始化时）。<br/>请注意，前两个事件也在你将Actor放置在关卡编辑器时被调用。</p>
@@ -379,7 +390,590 @@
 </h3><hr>
 <p>其实 <code>GENERATED_BODY</code> 与<code>GENERATED_UCLASS_BODY</code>的区别在于：<br/><code>GENERATED_BODY</code><strong>声明并定义</strong> 了一个接收 <code>const FObjectInitializer&amp;</code> 的构造函数，<br/><code>GENERATED_UCLASS_BODY</code><strong>只声明</strong> 了该构造函数，需要用户自己提供一个定义。</p>
 <hr>
-<h2 id="乱七八糟">乱七八糟
+<h2 id="核心">核心
+</h2><h3 id="容器">容器
+</h3><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">特性</th>
+<th style="text-align:left">TArray</th>
+<th style="text-align:left">TMap</th>
+<th style="text-align:left">TSet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>存储方式</strong></td>
+<td style="text-align:left">连续内存</td>
+<td style="text-align:left">哈希表（键值对）</td>
+<td style="text-align:left">哈希表（唯一元素）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>重复元素</strong></td>
+<td style="text-align:left">允许</td>
+<td style="text-align:left">键唯一，值可重复</td>
+<td style="text-align:left">元素唯一</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>查找效率</strong></td>
+<td style="text-align:left"><code>O(n)</code>（线性搜索）</td>
+<td style="text-align:left"><code>O(1)</code>（平均）</td>
+<td style="text-align:left"><code>O(1)</code>（平均）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>插入/删除效率</strong></td>
+<td style="text-align:left">末尾高效，中间低效</td>
+<td style="text-align:left"><code>O(1)</code>（平均）</td>
+<td style="text-align:left"><code>O(1)</code>（平均）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>内存占用</strong></td>
+<td style="text-align:left">紧凑</td>
+<td style="text-align:left">较高（哈希表开销）</td>
+<td style="text-align:left">较高（哈希表开销）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>典型场景</strong></td>
+<td style="text-align:left">顺序访问、排序、随机访问</td>
+<td style="text-align:left">键值映射、快速键查找</td>
+<td style="text-align:left">唯一元素集合、存在性检查</td>
+</tr>
+</tbody>
+</table></div>
+<p>实现:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>容器类型</strong></th>
+<th style="text-align:left"><strong>UE 实现</strong></th>
+<th style="text-align:left"><strong>STL 实现</strong></th>
+<th style="text-align:left"><strong>特点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>TArray</strong></td>
+<td style="text-align:left">动态数组（类似 <code>std::vector</code>）</td>
+<td style="text-align:left"><code>std::vector</code></td>
+<td style="text-align:left">连续内存，支持快速随机访问，预分配内存优化。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>TSet</strong></td>
+<td style="text-align:left">哈希表（开放寻址法）</td>
+<td style="text-align:left"><code>std::unordered_set</code></td>
+<td style="text-align:left">使用线性探测解决冲突，内存紧凑，缓存友好。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>TMap</strong></td>
+<td style="text-align:left">哈希表（开放寻址法）</td>
+<td style="text-align:left"><code>std::unordered_map</code></td>
+<td style="text-align:left">类似 <code>TSet</code>，存储键值对，支持快速查找。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>TMultiMap</strong></td>
+<td style="text-align:left">哈希表（链地址法）</td>
+<td style="text-align:left"><code>std::unordered_multimap</code></td>
+<td style="text-align:left">支持重复键，链地址法解决冲突。</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>UE 不使用红黑树的原因</strong></p>
+<ul>
+<li><strong>性能考量</strong>：
+哈希表的平均时间复杂度为 <code>O(1)</code>，而红黑树为 <code>O(log N)</code>。<br/>在游戏开发中，高频查找场景更倾向于哈希表。</li>
+<li><strong>内存布局</strong>：
+开放寻址哈希表的内存连续，利于缓存命中，适合数据密集型操作。</li>
+</ul>
+<p>用途:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>容器</strong></th>
+<th style="text-align:left"><strong>适用场景</strong></th>
+<th style="text-align:left"><strong>示例</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong><code>TArray</code></strong></td>
+<td style="text-align:left">需要快速随机访问、顺序遍历或堆栈式操作的数据集合</td>
+<td style="text-align:left">玩家背包物品列表、技能释放队列</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong><code>TSet</code></strong></td>
+<td style="text-align:left">需要快速查找唯一元素、不关心顺序的集合</td>
+<td style="text-align:left">玩家已解锁的成就集合、场景中激活的触发器列表</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong><code>TMap</code></strong></td>
+<td style="text-align:left">需要键值对映射、通过键快速查找值的场景</td>
+<td style="text-align:left">玩家属性表（键：属性名，值：数值）、<br/>NPC对话选项映射</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>TArray:</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 存储需要频繁遍历的粒子系统实例
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">UParticleSystemComponent</span><span class="o">*&gt;</span> <span class="n">ActiveParticles</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 每帧遍历更新
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="nl">Particle</span> <span class="p">:</span> <span class="n">ActiveParticles</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Particle</span><span class="o">-&gt;</span><span class="n">Tick</span><span class="p">(</span><span class="n">deltaTime</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 实现优先级队列（见后文与二叉堆关系）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">int32</span><span class="o">&gt;</span> <span class="n">PriorityQueue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">PriorityQueue</span><span class="p">.</span><span class="n">HeapPush</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">FGreater</span><span class="o">&lt;</span><span class="n">int32</span><span class="o">&gt;</span><span class="p">());</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>TSet:</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 存储玩家已收集的唯一道具ID
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TSet</span><span class="o">&lt;</span><span class="n">FName</span><span class="o">&gt;</span> <span class="n">CollectedItemIDs</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">CollectedItemIDs</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">NewItemID</span><span class="p">))</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CollectedItemIDs</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">NewItemID</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 快速判断敌人是否在警戒列表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TSet</span><span class="o">&lt;</span><span class="n">AEnemy</span><span class="o">*&gt;</span> <span class="n">AlertedEnemies</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">AlertedEnemies</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">TargetEnemy</span><span class="p">))</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">TriggerAlarm</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>TMap:</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 存储玩家技能冷却时间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TMap</span><span class="o">&lt;</span><span class="n">FName</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span> <span class="n">SkillCooldowns</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">SkillCooldowns</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">&#34;Fireball&#34;</span><span class="p">,</span> <span class="mf">5.0f</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">float</span><span class="o">*</span> <span class="n">Cooldown</span> <span class="o">=</span> <span class="n">SkillCooldowns</span><span class="p">.</span><span class="n">Find</span><span class="p">(</span><span class="s">&#34;Fireball&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 本地化文本映射
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TMap</span><span class="o">&lt;</span><span class="n">FString</span><span class="p">,</span> <span class="n">FText</span><span class="o">&gt;</span> <span class="n">LocalizedTexts</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">FText</span> <span class="n">WelcomeText</span> <span class="o">=</span> <span class="n">LocalizedTexts</span><span class="p">[</span><span class="s">&#34;Welcome&#34;</span><span class="p">];</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>举例来说，如果需要保持一列特有元素并需要经常添加、移除或搜索它们，那么可以使用TArray这个容器，<br/>但实际上TSet是一个更好的选择。</p>
+<hr>
+<h4 id="tarray">TArray
+</h4><p><a class="link" href="https://www.unrealengine.com/zh-CN/blog/optimizing-tarray-usage-for-performance"  target="_blank" rel="noopener"
+    >TArray优化</a></p>
+<p><code>TArray</code> 的堆操作不是线程安全的，多线程环境下需手动加锁。</p>
+<p><strong>UObject管理</strong></p>
+<p><code>UObject</code> 是 UE 中所有游戏对象的基类（如 <code>AActor</code>、<code>UActorComponent</code>），其生命周期由 <strong>垃圾回收</strong> 系统自动管理，核心机制如下：</p>
+<p><strong>(1) 引用计数与可达性分析</strong></p>
+<ul>
+<li><strong>根对象（Roots）</strong>：通过 <code>UPROPERTY()</code> 标记的引用、全局对象等被视为“根”，不会被回收。</li>
+<li><strong>引用链追踪</strong>：GC 定期从根对象出发，标记所有可达对象，未被标记的对象会被回收。</li>
+<li><strong>托管对象</strong>：所有 <code>UObject</code> 派生类实例必须由 UE 引擎创建（通过 <code>NewObject</code> 或 <code>CreateDefaultSubobject</code>）。</li>
+</ul>
+<p><strong>(2) TArray 对 UObject 的管理</strong></p>
+<p>当 <code>TArray</code> 存储 <code>UObject</code> 指针时，需显式声明引用关系以确保 GC 正确工作：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">MyActor</span> <span class="o">:</span> <span class="k">public</span> <span class="n">AActor</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">UPROPERTY</span><span class="p">()</span> <span class="c1">// 必须标记 UPROPERTY()，否则 GC 可能误回收
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">TArray</span><span class="o">&lt;</span><span class="n">UMyObject</span><span class="o">*&gt;</span> <span class="n">MyObjects</span><span class="p">;</span> <span class="c1">// 存储 UObject 指针
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">AMyActor</span><span class="o">::</span><span class="n">ManageObjects</span><span class="p">()</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">UMyObject</span><span class="o">*</span> <span class="n">Obj</span> <span class="o">=</span> <span class="n">NewObject</span><span class="o">&lt;</span><span class="n">UMyObject</span><span class="o">&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">);</span> <span class="c1">// 创建对象
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">MyObjects</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">Obj</span><span class="p">);</span> <span class="c1">// 添加引用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">MyObjects</span><span class="p">.</span><span class="n">RemoveAt</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// 移除引用（若对象不再被引用，可能被 GC 回收）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>规则</strong></th>
+<th style="text-align:left"><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong><code>UPROPERTY()</code> 标记</strong></td>
+<td style="text-align:left">容器内的 <code>UObject</code> 指针必须标记 <code>UPROPERTY()</code>，否则 GC 无法追踪引用。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>手动销毁限制</strong></td>
+<td style="text-align:left">禁止直接调用 <code>delete</code> 销毁 <code>UObject</code>，必须由 GC 自动回收。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>弱引用</strong></td>
+<td style="text-align:left">使用 <code>TWeakObjectPtr&lt;UMyObject&gt;</code> 存储弱引用，避免阻止 GC 回收。</td>
+</tr>
+</tbody>
+</table></div>
+<p>生命周期：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 创建对象
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">UMyObject</span><span class="o">*</span> <span class="n">Obj</span> <span class="o">=</span> <span class="n">NewObject</span><span class="o">&lt;</span><span class="n">UMyObject</span><span class="o">&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl"><span class="n">MyObjects</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">Obj</span><span class="p">);</span> <span class="c1">// Obj 被 MyObjects 引用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 移除引用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">MyObjects</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">Obj</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl"><span class="c1">// 此时若 Obj 无其他引用，GC 会将其标记为待回收
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 强制触发 GC（调试用）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">GetWorld</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">ForceGarbageCollection</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<p><strong>堆栈式操作</strong></p>
+<p>在 UE 的 <code>TArray</code> 中，“堆栈式操作”指的是支持类似 <strong>栈（Stack）数据结构</strong> 的后进先出（LIFO）操作。<br/>尽管 <code>TArray</code> 本质是动态数组，但它提供了与栈一致的接口，允许开发者在数组末尾高效地添加或移除元素。<br/></p>
+<ul>
+<li><code>TArray</code> 内部使用连续内存（类似 <code>std::vector</code>），<code>Push</code>/<code>Pop</code> 操作仅需修改数组末尾指针。</li>
+</ul>
+<p>这是通过以下方法实现的：</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>方法</strong></th>
+<th style="text-align:left"><strong>功能</strong></th>
+<th style="text-align:left"><strong>时间复杂度</strong></th>
+<th style="text-align:left"><strong>示例</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>Push</code> / <code>Add</code></td>
+<td style="text-align:left">在数组末尾添加元素</td>
+<td style="text-align:left">均摊 O(1)</td>
+<td style="text-align:left"><code>TArray&lt;int&gt; arr; arr.Add(1);</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><code>Pop</code></td>
+<td style="text-align:left">移除并返回数组末尾元素</td>
+<td style="text-align:left">O(1)</td>
+<td style="text-align:left"><code>int val = arr.Pop();</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><code>Top</code> / <code>Last</code></td>
+<td style="text-align:left">获取数组末尾元素（不移除）</td>
+<td style="text-align:left">O(1)</td>
+<td style="text-align:left"><code>int val = arr.Last();</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><code>Emplace</code></td>
+<td style="text-align:left">在末尾直接构造元素（避免拷贝）</td>
+<td style="text-align:left">均摊 O(1)</td>
+<td style="text-align:left"><code>arr.Emplace(42);</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>应用场景</strong></p>
+<ul>
+<li><strong>临时数据缓存</strong>：如子弹轨迹点、动画状态记录。</li>
+<li><strong>撤销/重做系统</strong>：将操作记录按栈顺序压入和弹出。</li>
+<li><strong>递归算法替代</strong>：手动管理调用栈，避免堆栈溢出。</li>
+</ul>
+<hr>
+<p><strong>最佳实践</strong></p>
+<ul>
+<li><strong>优先使用 <code>TArray</code> 的栈式接口</strong>：简化临时数据管理。</li>
+<li><strong>严格标记 <code>UPROPERTY()</code></strong>：避免 <code>UObject</code> 被意外回收。</li>
+<li><strong>弱引用与强引用分离</strong>：使用 <code>TWeakObjectPtr</code> 管理非所有权引用。</li>
+</ul>
+<hr>
+<p><strong>堆栈式操作 与 UObject</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 在 Actor 中定义栈式 UObject 缓存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">UCLASS</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">AMyActor</span> <span class="o">:</span> <span class="k">public</span> <span class="n">AActor</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">GENERATED_BODY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">UPROPERTY</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">TArray</span><span class="o">&lt;</span><span class="n">UMyObject</span><span class="o">*&gt;</span> <span class="n">ObjectStack</span><span class="p">;</span> <span class="c1">// 栈式缓存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="nf">PushObject</span><span class="p">(</span><span class="n">UMyObject</span><span class="o">*</span> <span class="n">Obj</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ObjectStack</span><span class="p">.</span><span class="n">Push</span><span class="p">(</span><span class="n">Obj</span><span class="p">);</span> <span class="c1">// 引用由 ObjectStack 持有
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">UMyObject</span><span class="o">*</span> <span class="nf">PopObject</span><span class="p">()</span> 
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">ObjectStack</span><span class="p">.</span><span class="n">Num</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">UMyObject</span><span class="o">*</span> <span class="n">Obj</span> <span class="o">=</span> <span class="n">ObjectStack</span><span class="p">.</span><span class="n">Pop</span><span class="p">();</span> <span class="c1">// 移除引用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">return</span> <span class="n">Obj</span><span class="p">;</span> <span class="c1">// 调用者需确保新引用关系，否则 Obj 可能被 GC 回收
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>跨帧引用</strong>：若从栈中取出 <code>UObject</code> 后未重新建立有效引用（如赋值给 <code>UPROPERTY()</code> 变量），对象可能被 GC 回收。</p>
+<p><strong>线程安全</strong>：GC 仅在游戏线程运行，异步操作中需谨慎处理 <code>UObject</code> 指针。</p>
+<hr>
+<p><strong>二叉堆</strong></p>
+<p><code>TArray</code> 提供了对 <strong>二叉堆（Binary Heap）</strong> 的原生支持（通过 <code>HeapPush</code>、<code>HeapPop</code> 等方法），这使得 <code>TArray</code> 可以直接用于实现 <strong>优先队列（Priority Queue）</strong>。</p>
+<p><strong>1. 二叉堆的核心特性</strong></p>
+<ul>
+<li><strong>数据结构</strong>：完全二叉树，通过数组（<code>TArray</code>）实现。</li>
+<li><strong>性质</strong>：
+<ul>
+<li><strong>最小堆</strong>：父节点的值 &lt;= 子节点的值（堆顶为最小值）。</li>
+<li><strong>最大堆</strong>：父节点的值 &gt;= 子节点的值（堆顶为最大值）。</li>
+</ul>
+</li>
+<li><strong>操作时间复杂度</strong>：
+<ul>
+<li>插入（<code>HeapPush</code>）：O(log n)</li>
+<li>弹出堆顶（<code>HeapPop</code>）：O(log n)</li>
+<li>获取堆顶（<code>HeapTop</code>）：O(1)</li>
+</ul>
+</li>
+</ul>
+<p><strong>2. 使用 <code>TArray</code> 实现堆的优势</strong></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>优势</strong></th>
+<th style="text-align:left"><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>内存高效</strong></td>
+<td style="text-align:left">连续内存布局，缓存友好，适合高频操作。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>内置接口</strong></td>
+<td style="text-align:left">直接使用 <code>HeapPush</code>/<code>HeapPop</code>，无需手动实现堆调整逻辑。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>灵活性</strong></td>
+<td style="text-align:left">支持自定义比较规则（如按优先级、时间戳、权重排序）。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>性能稳定</strong></td>
+<td style="text-align:left">时间复杂度为 O(log n)，适合实时游戏逻辑。</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>使用场景与示例:</strong></p>
+<p><strong>(1) AI 行为优先级调度</strong></p>
+<p><strong>场景</strong>：AI 需要根据优先级处理多个任务（如“攻击”优先级高于“移动”）。
+<strong>实现</strong>：使用 <code>TArray</code> 作为最小堆，按优先级排序。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 定义任务结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nc">FAI_Task</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">FString</span> <span class="n">Name</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">int32</span> <span class="n">Priority</span><span class="p">;</span> <span class="c1">// 优先级（值越小越优先）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 自定义比较规则（最小堆）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nc">FCompareTaskPriority</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">FORCEINLINE</span> <span class="kt">bool</span> <span class="nf">operator</span><span class="p">()(</span><span class="k">const</span> <span class="n">FAI_Task</span><span class="o">&amp;</span> <span class="n">A</span><span class="p">,</span> <span class="k">const</span> <span class="n">FAI_Task</span><span class="o">&amp;</span> <span class="n">B</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">A</span><span class="p">.</span><span class="n">Priority</span> <span class="o">&lt;</span> <span class="n">B</span><span class="p">.</span><span class="n">Priority</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// AI 任务队列
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">FAI_Task</span><span class="o">&gt;</span> <span class="n">TaskHeap</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 添加任务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TaskHeap</span><span class="p">.</span><span class="n">HeapPush</span><span class="p">(</span><span class="n">FAI_Task</span><span class="p">{</span><span class="s">&#34;Attack&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">},</span> <span class="n">FCompareTaskPriority</span><span class="p">());</span> <span class="c1">// 高优先级
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TaskHeap</span><span class="p">.</span><span class="n">HeapPush</span><span class="p">(</span><span class="n">FAI_Task</span><span class="p">{</span><span class="s">&#34;Move&#34;</span><span class="p">,</span> <span class="mi">3</span><span class="p">},</span> <span class="n">FCompareTaskPriority</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="n">TaskHeap</span><span class="p">.</span><span class="n">HeapPush</span><span class="p">(</span><span class="n">FAI_Task</span><span class="p">{</span><span class="s">&#34;Idle&#34;</span><span class="p">,</span> <span class="mi">5</span><span class="p">},</span> <span class="n">FCompareTaskPriority</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 执行最高优先级任务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">FAI_Task</span> <span class="n">NextTask</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">TaskHeap</span><span class="p">.</span><span class="n">HeapPop</span><span class="p">(</span><span class="n">NextTask</span><span class="p">,</span> <span class="n">FCompareTaskPriority</span><span class="p">(),</span> <span class="nb">false</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">UE_LOG</span><span class="p">(</span><span class="n">LogTemp</span><span class="p">,</span> <span class="n">Warning</span><span class="p">,</span> <span class="n">TEXT</span><span class="p">(</span><span class="s">&#34;Executing task: %s&#34;</span><span class="p">),</span> <span class="o">*</span><span class="n">NextTask</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span> <span class="c1">// 输出 &#34;Attack&#34;
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>(2) 伤害事件处理队列</strong></p>
+<p><strong>场景</strong>：在战斗中，多个伤害事件需要按优先级处理（如“暴击”优先于“普通攻击”）。
+<strong>实现</strong>：使用 <code>TArray</code> 作为最大堆，按伤害值排序。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 定义伤害事件结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nc">FDamageEvent</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">float</span> <span class="n">Damage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">AActor</span><span class="o">*</span> <span class="n">Source</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 使用 UE 内置的浮点数比较规则（最大堆）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">TArray</span><span class="o">&lt;</span><span class="n">FDamageEvent</span><span class="o">&gt;</span> <span class="n">DamageHeap</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 添加伤害事件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">DamageHeap</span><span class="p">.</span><span class="n">HeapPush</span><span class="p">({</span><span class="mf">100.0f</span><span class="p">,</span> <span class="n">Player</span><span class="p">},</span> <span class="n">TGreater</span><span class="o">&lt;</span><span class="n">FDamageEvent</span><span class="o">&gt;</span><span class="p">());</span> <span class="c1">// 暴击
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">DamageHeap</span><span class="p">.</span><span class="n">HeapPush</span><span class="p">({</span><span class="mf">50.0f</span><span class="p">,</span> <span class="n">Enemy</span><span class="p">},</span> <span class="n">TGreater</span><span class="o">&lt;</span><span class="n">FDamageEvent</span><span class="o">&gt;</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 处理最高伤害事件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">FDamageEvent</span> <span class="n">TopDamage</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">DamageHeap</span><span class="p">.</span><span class="n">HeapPop</span><span class="p">(</span><span class="n">TopDamage</span><span class="p">,</span> <span class="n">TGreater</span><span class="o">&lt;</span><span class="n">FDamageEvent</span><span class="o">&gt;</span><span class="p">(),</span> <span class="nb">false</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">ApplyDamage</span><span class="p">(</span><span class="n">TopDamage</span><span class="p">.</span><span class="n">Source</span><span class="p">,</span> <span class="n">TopDamage</span><span class="p">.</span><span class="n">Damage</span><span class="p">);</span> <span class="c1">// 先处理 100 点伤害
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="委托">委托
+</h3><p>示例:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">DECLARE_DELEGATE_OneParam</span><span class="p">(</span><span class="n">FStringDelegate</span><span class="p">,</span> <span class="n">FString</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">FMyClass</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FStringDelegate</span> <span class="n">WriteToLogDelegate</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="乱七八糟">乱七八糟
 </h2><h3 id="log">Log
 </h3><div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -825,6 +1419,117 @@
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="n">VoidFuncTemplate</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl">    <span class="n">IntVarFuncTemplate</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="替换为空函数">替换为空函数
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;windows.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="n">Func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::Func()&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 用于提取成员函数指针地址的工具函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span><span class="o">*</span> <span class="n">getMemberFunctionAddress</span><span class="p">(</span><span class="n">U</span> <span class="n">T</span><span class="o">::*</span> <span class="n">memberFunc</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">union</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">U</span> <span class="n">T</span><span class="o">::*</span> <span class="n">ptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="n">u</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">memberFunc</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">u</span><span class="p">.</span><span class="n">addr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 空函数的机器码（直接返回）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">emptyFunc</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="mh">0xC3</span> <span class="p">};</span> <span class="c1">// x86 的 RET 指令
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">A</span> <span class="n">a</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 获取 Func 的地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span><span class="o">*</span> <span class="n">funcAddress</span> <span class="o">=</span> <span class="n">getMemberFunctionAddress</span><span class="p">(</span><span class="o">&amp;</span><span class="n">A</span><span class="o">::</span><span class="n">Func</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 修改内存权限为可写
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">DWORD</span> <span class="n">oldProtect</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">VirtualProtect</span><span class="p">(</span><span class="n">funcAddress</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">emptyFunc</span><span class="p">),</span> <span class="n">PAGE_EXECUTE_READWRITE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">oldProtect</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;VirtualProtect failed: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">GetLastError</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 用空函数的机器码覆盖 Func
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">memcpy</span><span class="p">(</span><span class="n">funcAddress</span><span class="p">,</span> <span class="n">emptyFunc</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">emptyFunc</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 恢复内存权限
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">DWORD</span> <span class="n">temp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">VirtualProtect</span><span class="p">(</span><span class="n">funcAddress</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">emptyFunc</span><span class="p">),</span> <span class="n">oldProtect</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">temp</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;VirtualProtect failed: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">GetLastError</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 调用 Func，此时不会打印任何内容
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">a</span><span class="p">.</span><span class="n">Func</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
