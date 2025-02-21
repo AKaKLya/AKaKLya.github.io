@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="简介 迭代器（Iterator）是一种用于遍历容器（如 std::vector, std::list, std::map 等）中元素的工具。它们提供了一种统一的方式来访问和操作容器中的数据，无论这些容器是如何实现的。迭代器的设计灵感来源于指针的概念，但它们提供了更抽象和灵活的操作接口。迭代器可以看作是“智能指针”，它们不仅能够指向容器中的某个位置，还能通过一系列标准操作进行移动、访问和修改容器中的元素。 STL 的六大组件通过 迭代器 作为粘合剂，将以下五个东西有机整合。 数据存储（容器） 数据操作（算法） 行为策略（仿函数） 接口改造（适配器） 内存管理（分配器） 这种设计使得代码高度模块化、可复用且高效，成为C++泛型编程的典范。容器库 算法库 容器类型 特点 时间复杂度（平均） 时间复杂度（最坏） 适用场景 std::vector 动态数组，支持随机访问 O(1) O(n) 需要频繁随机访问，且大多数操作集中在尾部 std::deque 双端队列，支持两端高效插入和删除 O(1) O(n) 需要在两端频繁插入和删除 std::list 双向链表，支持任意位置高效插入和删除 O(1) O(n) 需要频繁在任意位置插入和删除 std::forward_list 单向链表，支持高效插入和删除 O(1) O(n) 需要单向遍历和高效的插入/删除操作 std::set 有序集合，基于平衡二叉搜索树 O(log n) O(log n) 需要保持元素有序 std::multiset 有序多重集合，允许重复元素 O(log n) O(log n) 需要保持元素有序且允许重复元素 std::map 有序映射，基于平衡二叉搜索树 O(log n) O(log n) 需要保持键有序 std::multimap 有序多重映射，允许重复键 O(log n) O(log n) 需要保持键有序且允许重复键 std::unordered_set 无序集合，基于哈希表 O(1) O(n) 需要高效查找、插入和删除操作，且不需要有序 std::unordered_multiset 无序多重集合，允许重复元素 O(1) O(n) 需要高效查找、插入和删除操作，且允许重复元素 std::unordered_map 无序映射，基于哈希表 O(1) O(n) 需要高效查找、插入和删除操作，且不需要有序 std::unordered_multimap 无序多重映射，允许重复键 O(1) O(n) 需要高效查找、插入和删除操作，且允许重复键 std::stack LIFO 数据结构，基于其他容器实现 O(1) O(1) 需要栈操作 std::queue FIFO 数据结构，基于其他容器实现 O(1) O(1) 需要队列操作 std::priority_queue 优先队列，基于堆实现 O(log n) O(log n) 需要优先级管理的数据结构 设计哲学与优势">
 <title>EASTL</title>
 
-<link rel='canonical' href='https://akaklya.github.io/p/eastl/'>
+<link rel='canonical' href='http://localhost:1313/p/eastl/'>
 
 <link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="EASTL">
 <meta property='og:description' content="简介 迭代器（Iterator）是一种用于遍历容器（如 std::vector, std::list, std::map 等）中元素的工具。它们提供了一种统一的方式来访问和操作容器中的数据，无论这些容器是如何实现的。迭代器的设计灵感来源于指针的概念，但它们提供了更抽象和灵活的操作接口。迭代器可以看作是“智能指针”，它们不仅能够指向容器中的某个位置，还能通过一系列标准操作进行移动、访问和修改容器中的元素。 STL 的六大组件通过 迭代器 作为粘合剂，将以下五个东西有机整合。 数据存储（容器） 数据操作（算法） 行为策略（仿函数） 接口改造（适配器） 内存管理（分配器） 这种设计使得代码高度模块化、可复用且高效，成为C++泛型编程的典范。容器库 算法库 容器类型 特点 时间复杂度（平均） 时间复杂度（最坏） 适用场景 std::vector 动态数组，支持随机访问 O(1) O(n) 需要频繁随机访问，且大多数操作集中在尾部 std::deque 双端队列，支持两端高效插入和删除 O(1) O(n) 需要在两端频繁插入和删除 std::list 双向链表，支持任意位置高效插入和删除 O(1) O(n) 需要频繁在任意位置插入和删除 std::forward_list 单向链表，支持高效插入和删除 O(1) O(n) 需要单向遍历和高效的插入/删除操作 std::set 有序集合，基于平衡二叉搜索树 O(log n) O(log n) 需要保持元素有序 std::multiset 有序多重集合，允许重复元素 O(log n) O(log n) 需要保持元素有序且允许重复元素 std::map 有序映射，基于平衡二叉搜索树 O(log n) O(log n) 需要保持键有序 std::multimap 有序多重映射，允许重复键 O(log n) O(log n) 需要保持键有序且允许重复键 std::unordered_set 无序集合，基于哈希表 O(1) O(n) 需要高效查找、插入和删除操作，且不需要有序 std::unordered_multiset 无序多重集合，允许重复元素 O(1) O(n) 需要高效查找、插入和删除操作，且允许重复元素 std::unordered_map 无序映射，基于哈希表 O(1) O(n) 需要高效查找、插入和删除操作，且不需要有序 std::unordered_multimap 无序多重映射，允许重复键 O(1) O(n) 需要高效查找、插入和删除操作，且允许重复键 std::stack LIFO 数据结构，基于其他容器实现 O(1) O(1) 需要栈操作 std::queue FIFO 数据结构，基于其他容器实现 O(1) O(1) 需要队列操作 std::priority_queue 优先队列，基于堆实现 O(log n) O(log n) 需要优先级管理的数据结构 设计哲学与优势">
-<meta property='og:url' content='https://akaklya.github.io/p/eastl/'>
+<meta property='og:url' content='http://localhost:1313/p/eastl/'>
 <meta property='og:site_name' content='AKaKLya'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='1074-01-01T20:11:46&#43;08:00'/><meta property='article:modified_time' content='1074-01-01T20:11:46&#43;08:00'/>
 <meta name="twitter:title" content="EASTL">
@@ -4003,7 +4003,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0f4e44504cf40ab34cf124bb8fa71a5615b897b6d3841a1d2857b604319620c7.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

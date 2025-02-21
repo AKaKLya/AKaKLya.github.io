@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="起手式 网页图片模糊 点击图片预览高清大图 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine↑首先看一遍官方文档↑ GAS学习资料:https://github.com/BillEliot/GASDocumentation_Chinese 官方的ActionRPG项目， GAS A系列是由 &lt; Gameplay Ability System - Top Down RPG&gt; 这一套教程来的,简单的细枝末节不记录https://www.bilibili.com/video/BV1JD421E7yC 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.尽管AttributeSet提供了Setter方法，也不该手动调用它去做一些事情. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都可以是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写难懂的东西 只会让脑子开局就过载，作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能时 如果在冷却中 就不让释放，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
 <title>GAS A - 技能系统总览</title>
 
-<link rel='canonical' href='https://akaklya.github.io/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/'>
+<link rel='canonical' href='http://localhost:1313/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/'>
 
 <link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="GAS A - 技能系统总览">
 <meta property='og:description' content="起手式 网页图片模糊 点击图片预览高清大图 https://dev.epicgames.com/documentation/zh-cn/unreal-engine/gameplay-ability-system-for-unreal-engine↑首先看一遍官方文档↑ GAS学习资料:https://github.com/BillEliot/GASDocumentation_Chinese 官方的ActionRPG项目， GAS A系列是由 &lt; Gameplay Ability System - Top Down RPG&gt; 这一套教程来的,简单的细枝末节不记录https://www.bilibili.com/video/BV1JD421E7yC 与GameplayAbilitySystem交互的Actor须拥有 GameplayAbilitySystemComponent。此组件将激活技能、存储属性、更新效果，和处理Actor间的交互。 角色类拥有UAbilitySystemComponent 和 UAttributeSet 两个组件，AttributeSet保存角色的属性值，例如:生命值、魔法值、生命回复、攻击力、法术强度，而这些属性由GameplayEffect来修改，不应手动修改.尽管AttributeSet提供了Setter方法，也不该手动调用它去做一些事情. GameplayAbility执行技能任务，被动、Q、W、E、R、D、F都可以是GameplayAbility.技能(GameplayAbility) 可以配置CD、Cost，也就是冷却时长，耗费多少蓝量. CD和Cost都由GamePlayEffect定义. CD、Cost的信息都可以在GA的蓝图面板中配置，选择对应的GE蓝图即可. 技能执行流程 先描述最感兴趣的一集吧，开局就写难懂的东西 只会让脑子开局就过载，作文首先要引起读者的兴趣。 这把先开&lt;泽拉斯&gt;奥兄弟们，最会空技能的一个英雄。 冷却时间 泽拉斯的Q技能一级有9秒CD，释放技能时 如果在冷却中 就不让释放，这个流程如何使用GAS来执行？GE可以选择 &lt;立即生效 | 持续一段时间 | 无限时间&gt; 三个策略。假设这个技能是GA_Q，它拥有标签TAG_Q，那么就让GE_Q_CD使用 &lt;持续一段时间&gt; 这个策略，并且让GE_Q_CD去阻挡TAG_Q，等到GE的持续时间结束才会取消阻挡。 这样就实现了技能的冷却。执行流程为:GA_Q被触发&mdash;&gt;检测CD&mdash;&gt;不在CD中&mdash;&gt;执行技能&mdash;&gt;技能结束，开始CDGA_Q被触发&mdash;&gt;检测CD&mdash;&gt;正在CD中&mdash;&gt;技能结束 技能耗费 泽拉斯的Q技能需要耗费80蓝量，这就要求Attribute里面拥有&lt;魔法值&gt;这个属性，在GA_Q执行时扣除相应的魔法值，如果蓝量不够 就不能执行技能.GE_Q_Cost 使用 &lt;立即生效&gt; 策略，(瞪眼观察法可知 另外两个策略一看就不对)Q需要耗费80蓝量，GE_Q_Cost就得让 &lt;魔法值&gt; 减80，魔法值够减的话 那么就能执行技能. 不够减 就不执行. 执行流程与 冷却时间 相似. 技能伤害 有了上面使用GE去做CD 耗蓝，那么伤害如何去做？ 直接减掉目标的血量值？NO ，Attribute中定义 &lt;即将到来的伤害&gt;， 如果伤害值是50， 那么就使用GE 让敌人的 &lt;即将到来的伤害&gt; +50。 在Attribute中去执行减掉生命值的操作.">
-<meta property='og:url' content='https://akaklya.github.io/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/'>
+<meta property='og:url' content='http://localhost:1313/p/gas-a-%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88/'>
 <meta property='og:site_name' content='AKaKLya'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-01-10T11:59:56&#43;08:00'/><meta property='article:modified_time' content='2025-01-10T11:59:56&#43;08:00'/>
 <meta name="twitter:title" content="GAS A - 技能系统总览">
@@ -1456,7 +1456,7 @@ Row_MaxMana<br/></p>
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0f4e44504cf40ab34cf124bb8fa71a5615b897b6d3841a1d2857b604319620c7.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');
