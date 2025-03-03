@@ -10,7 +10,7 @@
 <meta property='og:description' content="简介 多线程 多线程是指在一个程序中同时运行多个线程，每个线程可以独立执行不同的任务。线程是操作系统调度的最小单位，多个线程共享进程的资源（如内存、文件句柄等），但每个线程有自己的栈和寄存器状态。 多线程允许程序同时执行多个任务，从而提高效率和性能，特别是在多核处理器上。 关键概念 线程：线程是操作系统调度的最小单位，一个进程可以包含多个线程，共享进程的资源。 并发：多个线程交替执行，通过时间片轮转实现“同时”运行的效果。 并行：多个线程在多个 CPU 核心上真正同时执行,每个核心执行一个线程。 并发，多个任务在短时间内交替执行，反复横跳，给人一种“同时运行”的错觉，实际是单个 CPU 核心通过快速切换任务来实现并发。 特性 并发（Concurrency） 并行（Parallelism） 定义 多个任务交替执行，看似同时运行。 多个任务真正同时执行。 硬件需求 单核 CPU 即可实现。 需要多核 CPU 或多个处理器。 目标 提高资源利用率，增强系统响应性。 提高计算性能，加快任务完成速度。 适用场景 I/O 密集型任务（如网络请求、文件读写）。 计算密集型任务（如科学计算、图像处理）。 实现方式 通过时间片轮转或事件循环实现。 通过多核 CPU 或分布式计算实现。 示例 单核 CPU 上运行多个线程。 多核 CPU 上同时运行多个线程。 并发示例： 一个 Web 服务器同时处理多个客户端请求。虽然只有一个 CPU 核心，但通过快速切换任务，服务器可以“同时”处理多个请求。 一个文本编辑器在用户输入时自动保存文件。输入和保存操作交替执行，但不会真正同时运行。 并行示例： 使用多核 CPU 并行渲染视频。每个核心负责渲染视频的不同部分，最终合并结果。 使用 GPU 并行计算矩阵乘法。每个核心同时计算矩阵的一个元素。 多线程的作用 提高性能：在多核处理器上，多线程可以并行执行任务，充分利用 CPU 资源，加快程序运行速度。 提高响应性：在图形用户界面（GUI）应用程序中，多线程可以避免主线程被长时间任务阻塞，保持界面响应。 简化设计：多线程可以将复杂任务分解为多个独立线程，简化程序设计和维护。 异步处理：多线程可以异步执行任务，如网络请求、文件读写等，避免阻塞主线程。 实际应用场景 Web 服务器： 场景：处理大量并发请求。 实现：每个请求由一个独立线程处理，主线程继续接收新请求。 优势：提高并发处理能力，减少响应时间。 图形用户界面（GUI）应用程序： 场景：执行耗时任务（如文件处理、网络请求）时保持界面响应。 实现：耗时任务在后台线程执行，主线程负责更新界面。 优势：避免界面卡顿，提升用户体验。 数据处理与计算： 场景：大数据处理或复杂计算（如图像处理、科学计算）。 实现：将数据分块，每个线程处理一块。 优势：充分利用多核 CPU，加快处理速度。 游戏开发： 场景：同时处理图形渲染、物理模拟、AI 计算等任务。 实现：不同任务由不同线程处理，通过同步机制协调。 优势：提高游戏性能和流畅度。 实时系统： 场景：需要快速响应的系统（如自动驾驶、工业控制）。 实现：关键任务由独立线程处理，确保实时性。 优势：提高系统响应速度和可靠性。 多线程与进程 在操作系统中，进程和线程是两个核心概念，而主线程是进程中的一个特殊线程。">
 <meta property='og:url' content='http://localhost:1313/p/c-%E5%A4%9A%E7%BA%BF%E7%A8%8B/'>
 <meta property='og:site_name' content='AKaKLya'>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='1574-01-01T13:05:38&#43;08:00'/><meta property='article:modified_time' content='1574-01-01T13:05:38&#43;08:00'/>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='1074-01-04T13:05:38&#43;08:00'/><meta property='article:modified_time' content='1074-01-04T13:05:38&#43;08:00'/>
 <meta name="twitter:title" content="C++多线程">
 <meta name="twitter:description" content="简介 多线程 多线程是指在一个程序中同时运行多个线程，每个线程可以独立执行不同的任务。线程是操作系统调度的最小单位，多个线程共享进程的资源（如内存、文件句柄等），但每个线程有自己的栈和寄存器状态。 多线程允许程序同时执行多个任务，从而提高效率和性能，特别是在多核处理器上。 关键概念 线程：线程是操作系统调度的最小单位，一个进程可以包含多个线程，共享进程的资源。 并发：多个线程交替执行，通过时间片轮转实现“同时”运行的效果。 并行：多个线程在多个 CPU 核心上真正同时执行,每个核心执行一个线程。 并发，多个任务在短时间内交替执行，反复横跳，给人一种“同时运行”的错觉，实际是单个 CPU 核心通过快速切换任务来实现并发。 特性 并发（Concurrency） 并行（Parallelism） 定义 多个任务交替执行，看似同时运行。 多个任务真正同时执行。 硬件需求 单核 CPU 即可实现。 需要多核 CPU 或多个处理器。 目标 提高资源利用率，增强系统响应性。 提高计算性能，加快任务完成速度。 适用场景 I/O 密集型任务（如网络请求、文件读写）。 计算密集型任务（如科学计算、图像处理）。 实现方式 通过时间片轮转或事件循环实现。 通过多核 CPU 或分布式计算实现。 示例 单核 CPU 上运行多个线程。 多核 CPU 上同时运行多个线程。 并发示例： 一个 Web 服务器同时处理多个客户端请求。虽然只有一个 CPU 核心，但通过快速切换任务，服务器可以“同时”处理多个请求。 一个文本编辑器在用户输入时自动保存文件。输入和保存操作交替执行，但不会真正同时运行。 并行示例： 使用多核 CPU 并行渲染视频。每个核心负责渲染视频的不同部分，最终合并结果。 使用 GPU 并行计算矩阵乘法。每个核心同时计算矩阵的一个元素。 多线程的作用 提高性能：在多核处理器上，多线程可以并行执行任务，充分利用 CPU 资源，加快程序运行速度。 提高响应性：在图形用户界面（GUI）应用程序中，多线程可以避免主线程被长时间任务阻塞，保持界面响应。 简化设计：多线程可以将复杂任务分解为多个独立线程，简化程序设计和维护。 异步处理：多线程可以异步执行任务，如网络请求、文件读写等，避免阻塞主线程。 实际应用场景 Web 服务器： 场景：处理大量并发请求。 实现：每个请求由一个独立线程处理，主线程继续接收新请求。 优势：提高并发处理能力，减少响应时间。 图形用户界面（GUI）应用程序： 场景：执行耗时任务（如文件处理、网络请求）时保持界面响应。 实现：耗时任务在后台线程执行，主线程负责更新界面。 优势：避免界面卡顿，提升用户体验。 数据处理与计算： 场景：大数据处理或复杂计算（如图像处理、科学计算）。 实现：将数据分块，每个线程处理一块。 优势：充分利用多核 CPU，加快处理速度。 游戏开发： 场景：同时处理图形渲染、物理模拟、AI 计算等任务。 实现：不同任务由不同线程处理，通过同步机制协调。 优势：提高游戏性能和流畅度。 实时系统： 场景：需要快速响应的系统（如自动驾驶、工业控制）。 实现：关键任务由独立线程处理，确保实时性。 优势：提高系统响应速度和可靠性。 多线程与进程 在操作系统中，进程和线程是两个核心概念，而主线程是进程中的一个特殊线程。">
   
@@ -307,7 +307,8 @@
     </li>
     <li><a href="#多线程-c">多线程-C</a>
       <ol>
-        <li><a href="#线程池">线程池</a></li>
+        <li><a href="#飞升">飞升</a></li>
+        <li><a href="#mutex">mutex</a></li>
       </ol>
     </li>
   </ol>
@@ -351,7 +352,7 @@
   <path d="M3 11h16" />
   <path d="M18 16.496v1.504l1 1" />
 </svg>
-                <time class="article-time--published">Jan 01, 1574</time>
+                <time class="article-time--published">Jan 04, 1074</time>
             </div>
         
 
@@ -366,7 +367,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 37 分钟
+                    阅读时长: 41 分钟
                 </time>
             </div>
         
@@ -5927,8 +5928,8 @@
 </ul>
 <p>检查 atomicPoint 和 刚才读取的 atomicPoint (oldVal) 的值是否相同，如果值不一样，那就说明atomicPoint被其它线程篡改了。<br/>相等 ， 说明没有线程修改atomicPoint，可以把newVal给它，函数返回true<br/>不相等，说明有线程修改了atomicPoint ，此时就要把oldval给它，返回false，重新进入循环体计算newVal的值。</p>
 <h2 id="多线程-c">多线程-C
-</h2><h3 id="线程池">线程池
-</h3><p>服务器 &mdash;&gt; 客户端， 每来一个客户端 就创建一个新线程给客户服务.<br/>网络游戏 2万个玩家，不可能给每个玩家创建一个线程，<br/>创建线程可能会因为资源不够而失败，也有线程切换造成的消耗，</p>
+</h2><p>线程池</p>
+<p>服务器 &mdash;&gt; 客户端， 每来一个客户端 就创建一个新线程给客户服务.<br/>网络游戏 2万个玩家，不可能给每个玩家创建一个线程，<br/>创建线程可能会因为资源不够而失败，也有线程切换造成的消耗，</p>
 <p><strong>线程池</strong>是一种设计模式，用于管理和复用一组工作线程，以提高应用程序的性能和资源利用率。<br/>它通过预先创建一组线程，并将这些线程放入一个“池”中，以便在需要执行任务时可以快速分配和重用这些线程，而不需要频繁地创建和销毁线程。</p>
 <p>通过复用一组工作线程来处理多个任务，减少了线程创建和销毁的开销，提高了系统的响应速度和资源利用率。</p>
 <p>线程数量过多，因为线程切换时 需要切换上下文，所以性能效率下降，</p>
@@ -6031,6 +6032,600 @@
 </ul>
 </li>
 </ol>
+<h3 id="飞升">飞升
+</h3><p><strong>构造与析构</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kr">thread</span> <span class="n">t1</span><span class="p">([]()</span> <span class="p">{</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Hello World&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">});</span>
+</span></span><span class="line"><span class="cl">    <span class="n">t1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>传入Lambda时，调用thread的构造函数:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">_Fn</span><span class="p">,</span> <span class="k">class</span><span class="err">... </span><span class="nc">_Args</span><span class="p">,</span> <span class="n">enable_if_t</span><span class="o">&lt;!</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">_Remove_cvref_t</span><span class="o">&lt;</span><span class="n">_Fn</span><span class="o">&gt;</span><span class="p">,</span> <span class="kr">thread</span><span class="o">&gt;</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="o">=</span> <span class="mi">0</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">explicit</span> <span class="kr">thread</span><span class="p">(</span><span class="n">_Fn</span><span class="o">&amp;&amp;</span> <span class="n">_Fx</span><span class="p">,</span> <span class="n">_Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">_Ax</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">_Start</span><span class="p">(</span><span class="n">_STD</span> <span class="n">forward</span><span class="o">&lt;</span><span class="n">_Fn</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_Fx</span><span class="p">),</span> <span class="n">_STD</span> <span class="n">forward</span><span class="o">&lt;</span><span class="n">_Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_Ax</span><span class="p">)...);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><strong>目的</strong>: 创建一个新线程，并在该线程中执行给定的可调用对象及其参数。</li>
+<li><strong>模板参数:</strong>
+<ul>
+<li><code>_Fn</code>: 可调用对象的类型。</li>
+<li><code>_Args...</code>: 可变参数模板，表示传递给可调用对象的参数类型列表。</li>
+</ul>
+</li>
+<li><strong>SFINAE机制</strong>: 使用 <code>enable_if_t</code> 和 <code>is_same_v</code> 确保此构造函数不会被用来递归地构造 <code>std::thread</code> 对象，即防止将 <code>std::thread</code> 对象本身作为第一个参数传入。</li>
+<li><strong><code>explicit</code>关键字</strong>: 确保构造函数只能用于显式的类型转换，避免隐式转换带来的潜在错误。</li>
+<li><strong>完美转发</strong>: 利用 右值引用 (<code>&amp;&amp;</code>) 和 <code>std::forward</code> 保留原参数的左右值属性，以高效且正确的方式将可调用对象及其参数传递给内部的启动方法 <code>_Start</code>。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">_Fn</span><span class="p">,</span> <span class="k">class</span><span class="err">... </span><span class="nc">_Args</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">_Start</span><span class="p">(</span><span class="n">_Fn</span><span class="o">&amp;&amp;</span> <span class="n">_Fx</span><span class="p">,</span> <span class="n">_Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">_Ax</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 使用std::tuple将可调用对象及其参数存储在一个元组中，
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//使用std::decay_t去除引用和cv限定符以确保正确的拷贝和存储。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">using</span> <span class="n">_Tuple</span>                 <span class="o">=</span> <span class="n">tuple</span><span class="o">&lt;</span><span class="n">decay_t</span><span class="o">&lt;</span><span class="n">_Fn</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">decay_t</span><span class="o">&lt;</span><span class="n">_Args</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1">//使用std::make_unique创建一个包含上述元组的智能指针，确保资源管理的安全性，并通过std::forward进行完美转发。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">auto</span> <span class="n">_Decay_copied</span>           <span class="o">=</span> <span class="n">_STD</span> <span class="n">make_unique</span><span class="o">&lt;</span><span class="n">_Tuple</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_STD</span> <span class="n">forward</span><span class="o">&lt;</span><span class="n">_Fn</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_Fx</span><span class="p">),</span> <span class="n">_STD</span> <span class="n">forward</span><span class="o">&lt;</span><span class="n">_Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_Ax</span><span class="p">)...);</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1">//获取一个调用器（即线程执行的入口点），这个过程涉及到元编程技巧，
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//通过std::index_sequence生成一个索引序列来帮助解包元组中的元素。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">constexpr</span> <span class="k">auto</span> <span class="n">_Invoker_proc</span> <span class="o">=</span> <span class="n">_Get_invoke</span><span class="o">&lt;</span><span class="n">_Tuple</span><span class="o">&gt;</span><span class="p">(</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="mi">1</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">...(</span><span class="n">_Args</span><span class="p">)</span><span class="o">&gt;</span><span class="p">{});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//使用_beginthreadex函数创建新线程，传入调用器_Invoker_proc和元组的指针_Decay_copied.get()作为		参数。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//_Thr._Hnd保存线程句柄，_Thr._Id保存线程ID。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">_Thr</span><span class="p">.</span><span class="n">_Hnd</span> <span class="o">=</span>
+</span></span><span class="line"><span class="cl">        <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">_CSTD</span> <span class="n">_beginthreadex</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">_Invoker_proc</span><span class="p">,</span> <span class="n">_Decay_copied</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">_Thr</span><span class="p">.</span><span class="n">_Id</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//--//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">_Thr</span><span class="p">.</span><span class="n">_Hnd</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// ownership transferred to the thread
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="n">_Decay_copied</span><span class="p">.</span><span class="n">release</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// failed to start thread
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">_Thr</span><span class="p">.</span><span class="n">_Id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_Throw_Cpp_error</span><span class="p">(</span><span class="n">_RESOURCE_UNAVAILABLE_TRY_AGAIN</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1">//如果线程创建成功（即_Thr._Hnd非空），则释放智能指针_Decay_copied的所有权，因为线程会接管该资源的生		命周期。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">//如果线程创建失败，则设置线程ID为0，并抛出异常_RESOURCE_UNAVAILABLE_TRY_AGAIN，指示资源不可用，		请重试。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>_Start</code> 函数通过模板编程实现了对可调用对象及其参数的灵活处理。</li>
+<li>使用 <code>std::tuple</code> 和 <code>std::unique_ptr </code>确保资源管理和类型安全。</li>
+<li>利用 <code>_beginthreadex</code> 和元编程技术创建了一个新的线程，并在线程中执行给定的可调用对象及其参数。</li>
+<li>处理了线程创建成功和失败的情况，提供了良好的错误处理机制。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kr">thread</span> <span class="nf">t1</span><span class="p">([]()</span> <span class="p">{</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Hello World&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">});</span>
+</span></span><span class="line"><span class="cl"><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">t1</span><span class="p">.</span><span class="n">joinable</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">t1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">t1</span><span class="p">.</span><span class="n">joinable</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">~</span><span class="kr">thread</span><span class="p">()</span> <span class="k">noexcept</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">joinable</span><span class="p">()){</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_STD</span> <span class="nf">terminate</span><span class="p">();</span> <span class="c1">// per N4950 [thread.thread.destr]/1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">bool</span> <span class="nf">joinable</span><span class="p">()</span> <span class="k">const</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">_Thr</span><span class="p">.</span><span class="n">_Id</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// thread::_Thrd_t _Thr;
+</span></span></span><span class="line"><span class="cl"><span class="c1">// _Thr 的类型 就是一个结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">using</span> <span class="n">_Thrd_id_t</span> <span class="o">=</span> <span class="kt">unsigned</span> <span class="kt">int</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">_Thrd_t</span> <span class="p">{</span> <span class="c1">// thread identifier for Win32
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span><span class="o">*</span> <span class="n">_Hnd</span><span class="p">;</span> <span class="c1">// Win32 HANDLE
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">_Thrd_id_t</span> <span class="n">_Id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果 <code>joinable()</code> 为 true，在析构时就会崩溃报错.</p>
+<p>如果 Id 不为 0 ，<code>joinable()</code>  为 true.      <br/>如果 Id = 0 ，<code>joinable()</code> 为 false.</p>
+<p>Id在什么情况下等于0？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">join</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//判断可加入
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">joinable</span><span class="p">())</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_Throw_Cpp_error</span><span class="p">(</span><span class="n">_INVALID_ARGUMENT</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//检查当前线程ID是否与调用join()的线程ID相同。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//如果是相同的线程尝试自我连接，会导致死锁，因此抛出错误。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">_Thr</span><span class="p">.</span><span class="n">_Id</span> <span class="o">==</span> <span class="n">_Thrd_id</span><span class="p">())</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_Throw_Cpp_error</span><span class="p">(</span><span class="n">_RESOURCE_DEADLOCK_WOULD_OCCUR</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//调用底层的线程等待函数_Thrd_join，该函数会阻塞当前线程直到指定线程完成其执行。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//如果线程成功完成，返回成功状态；否则抛出错误。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">_Thrd_join</span><span class="p">(</span><span class="n">_Thr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_Thrd_result</span><span class="o">::</span><span class="n">_Success</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_Throw_Cpp_error</span><span class="p">(</span><span class="n">_NO_SUCH_PROCESS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//如果线程成功完成，将 _Thr 重置为空（即设置 _Thr._Hnd 和 _Thr._Id 为0），
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//表示该线程对象不再关联任何活动线程。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">_Thr</span> <span class="o">=</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">detach</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//判断可加入
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">joinable</span><span class="p">())</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_Throw_Cpp_error</span><span class="p">(</span><span class="n">_INVALID_ARGUMENT</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//调用底层的线程分离函数_Thrd_detach，该函数将线程从其创建者（即当前线程对象）中分离出来。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//分离后的线程将在后台独立运行，不再受创建它的线程对象管理。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">_Thrd_detach</span><span class="p">(</span><span class="n">_Thr</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_Thrd_result</span><span class="o">::</span><span class="n">_Success</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_Throw_Cpp_error</span><span class="p">(</span><span class="n">_INVALID_ARGUMENT</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//重置线程状态
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">_Thr</span> <span class="o">=</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>join</code>  <code>detach</code>  最终都会把 _Thr 设为空，此时 Id = 0 .</p>
+<p><code>joinable()</code> 就是根据 <code>thread</code> 里面保存的 <code>_Thr</code> 是否为空 进行判断的.</p>
+<p><strong>总结</strong></p>
+<ul>
+<li>线程状态管理:
+<ul>
+<li>线程对象的状态由内部结构体<code>_Thrd_t</code>的成员变量<code>_Id</code>决定。<br/>如果<code>_Id</code>不为0，表示线程是可连接的（<code>joinable()</code>返回<code>true</code>）；<br/>如果<code>_Id</code>为0，则表示线程不可连接（<code>joinable()</code>返回<code>false</code>）。</li>
+</ul>
+</li>
+<li>线程对象的生命周期管理:
+<ul>
+<li>在线程对象析构时，如果线程仍然可连接(即<code>joinable()</code>为<code>true</code>),调用<code>terminate()</code>终止程序。<br/>因此，在析构前必须确保调用了<code>join()</code>或<code>detach()</code>方法之一。</li>
+</ul>
+</li>
+<li><code>join()</code> 和 <code>detach()</code> 方法的作用:
+<ul>
+<li><code>join()</code>方法等待线程完成，并将线程对象的内部状态重置，使得<code>_Id</code>变为0，从而<code>joinable()</code>返回<code>false</code>。</li>
+<li><code>detach()</code>方法分离线程，使其独立运行，并同样将线程对象的内部状态重置，使得<code>_Id</code>变为0，从而<code>joinable()</code>返回<code>false</code>。</li>
+</ul>
+</li>
+</ul>
+<p>这些机制共同确保了线程的安全管理和资源释放，避免了潜在的资源泄露和未定义行为。</p>
+<p><strong>分离的线程去了哪里？生命周期谁来管？</strong></p>
+<p><strong>进程终止时强制结束</strong></p>
+<p>所有线程（包括分离的线程）会在进程退出时被操作系统强制终止。</p>
+<ul>
+<li><strong>触发条件</strong>：
+<ul>
+<li>主线程返回（<code>main</code> 函数结束）。</li>
+<li>调用 <code>exit()</code> 或 <code>std::terminate()</code>。</li>
+<li>进程收到终止信号（如 <code>SIGTERM</code>）。</li>
+</ul>
+</li>
+</ul>
+<p><strong>示例：主线程结束后，分离线程被终止</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">infinite_loop</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* 无限循环 */</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">t</span><span class="p">(</span><span class="n">infinite_loop</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">t</span><span class="p">.</span><span class="n">detach</span><span class="p">();</span>  <span class="c1">// 分离线程
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>    <span class="c1">// 主线程结束，进程终止，分离线程被强制终止
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>通过协作式退出条件终止</strong></p>
+<p>为无限循环的线程设计<strong>退出条件</strong>，例如：</p>
+<ul>
+<li>使用原子变量或标志位通知线程退出。</li>
+<li>通过条件变量或信号量控制循环终止。</li>
+</ul>
+<p><strong>示例：使用原子标志位终止线程</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;atomic&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">stop</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span> <span class="c1">// 原子标志位
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">infinite_loop</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">stop</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 检查退出条件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="c1">// 执行任务...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">t</span><span class="p">(</span><span class="n">infinite_loop</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">t</span><span class="p">.</span><span class="n">detach</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 一段时间后通知线程退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">stop</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span> <span class="c1">// 设置退出标志
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 主线程继续运行...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>总结</strong></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">场景</th>
+<th style="text-align:left">线程如何终结？</th>
+<th style="text-align:left">资源回收方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">分离线程正常结束</td>
+<td style="text-align:left">线程函数返回</td>
+<td style="text-align:left">操作系统自动回收</td>
+</tr>
+<tr>
+<td style="text-align:left">分离线程无限循环</td>
+<td style="text-align:left">进程终止时强制结束</td>
+<td style="text-align:left">操作系统强制回收</td>
+</tr>
+<tr>
+<td style="text-align:left">协作式退出条件</td>
+<td style="text-align:left">线程检测到退出条件后主动结束</td>
+<td style="text-align:left">操作系统自动回收</td>
+</tr>
+<tr>
+<td style="text-align:left">强制终止（不推荐）</td>
+<td style="text-align:left">调用平台特定 API（如 <code>pthread_cancel</code>）</td>
+<td style="text-align:left">可能泄漏资源</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>最佳实践</strong>：</p>
+<ol>
+<li>避免使用无限循环的分离线程，除非有明确的退出机制。</li>
+<li>优先使用协作式退出条件（原子变量、条件变量等）。</li>
+<li>确保线程内部资源（如动态内存、文件句柄）能被正确释放。</li>
+</ol>
+<h3 id="mutex">mutex
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">static</span> <span class="n">mutex</span> <span class="n">g_mutex</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">func</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Hello World&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kr">thread</span> <span class="n">t</span><span class="p">(</span><span class="n">func</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">t</span><span class="p">.</span><span class="n">detach</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>10个线程同时输出，输出结果是乱的. 需要一个 <code>mutex</code>.</p>
+<p><code>std::mutex</code> 为什么这么神奇？</p>
+<p><code>lock</code> 与 <code>unlock</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 伪代码展示内部逻辑
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="n">mutex</span><span class="o">::</span><span class="n">lock</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 第一步：用户态快速路径（无竞争）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">atomic_cas</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">success</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 第二步：慢速路径（存在竞争）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">atomic_cas</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        
+</span></span><span class="line"><span class="cl">        <span class="c1">// 将线程加入等待队列（内核操作）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">futex_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">state</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl">        <span class="c1">// 当 unlock() 触发唤醒后，回到循环开始
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">mutex</span><span class="o">::</span><span class="n">unlock</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">atomic_store</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>  <span class="c1">// 释放锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">futex_wake</span><span class="p">(</span><span class="o">&amp;</span><span class="n">state</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>   <span class="c1">// 唤醒一个等待线程
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">特性</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">底层机制</td>
+<td style="text-align:left">依赖操作系统的同步原语（如 <code>futex</code>、<code>CRITICAL_SECTION</code>）和原子操作。</td>
+</tr>
+<tr>
+<td style="text-align:left">特殊性</td>
+<td style="text-align:left">独占性、不可递归、RAII 支持、不可复制。</td>
+</tr>
+<tr>
+<td style="text-align:left">线程对锁的“识别”</td>
+<td style="text-align:left">通过共享内存中的锁状态和操作系统调度实现。</td>
+</tr>
+<tr>
+<td style="text-align:left">解决竞争的原理</td>
+<td style="text-align:left">互斥访问临界区，保证原子性、可见性和有序性。</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>线程并发执行流程:</strong></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">时间</th>
+<th style="text-align:left">线程 t1</th>
+<th style="text-align:left">线程 t2</th>
+<th style="text-align:left">锁状态 (0x55a1a2b3c000)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">T0</td>
+<td style="text-align:left">调用 g_mtx.lock()</td>
+<td style="text-align:left">调用 g_mtx.lock()</td>
+<td style="text-align:left">0 → 1 (原子操作)</td>
+</tr>
+<tr>
+<td style="text-align:left">T1</td>
+<td style="text-align:left">成功获取锁，进入临界区</td>
+<td style="text-align:left">自旋等待/进入内核阻塞</td>
+<td style="text-align:left">1 (锁定)</td>
+</tr>
+<tr>
+<td style="text-align:left">T2</td>
+<td style="text-align:left">执行临界区代码</td>
+<td style="text-align:left">等待状态</td>
+<td style="text-align:left">1</td>
+</tr>
+<tr>
+<td style="text-align:left">T3</td>
+<td style="text-align:left">调用 g_mtx.unlock()</td>
+<td style="text-align:left">仍处于阻塞</td>
+<td style="text-align:left">1 → 0 (原子操作)</td>
+</tr>
+<tr>
+<td style="text-align:left">T4</td>
+<td style="text-align:left">退出临界区</td>
+<td style="text-align:left">被唤醒，尝试重新获取锁</td>
+<td style="text-align:left">0 → 1 (原子操作)</td>
+</tr>
+<tr>
+<td style="text-align:left">T5</td>
+<td style="text-align:left">线程结束</td>
+<td style="text-align:left">进入临界区</td>
+<td style="text-align:left">1</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>总结：全局锁的协同机制</strong></p>
+<ol>
+<li><strong>空间绑定</strong>：通过共享内存地址实现物理锁的可见性</li>
+<li><strong>原子操作</strong>：CPU 硬件保证状态修改的不可分割性</li>
+<li><strong>内核调度</strong>：操作系统管理线程的阻塞/唤醒队列</li>
+<li><strong>状态机转换</strong>：
+<ul>
+<li>锁定状态 → 修改内存值 + 维护等待队列</li>
+<li>解锁状态 → 触发唤醒信号</li>
+</ul>
+</li>
+</ol>
+<p>这种三层次（硬件原子操作+内存共享+内核调度）的协作，使得看似简单的 lock/unlock 能够精确协调线程执行顺序。</p>
 
 </section>
 

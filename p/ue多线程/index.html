@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="简介 FRunnable &ldquo;可运行对象&quot;的接口类定义: 可运行对象指可在任意线程上被&quot;运行&quot;的对象。其调用模式遵循三步：Init() -&gt; Run() -&gt; Exit()。 执行该对象的线程严格按此顺序调用，确保线程相关资源（如TLS）在对应阶段可用。 对象的所有初始化操作应在Init()中完成。 若初始化失败，线程将中止执行并返回错误码。成功则进入Run()执行核心任务， 最后通过Exit()进行资源清理。 成员函数: Init(): 初始化“可运行”对象。 【注意】此方法在聚合此对象的线程（即创建线程）上下文中调用，而非新创建的工作线程中执行 返回值表示初始化是否成功。 Run(): 执行“可运行”对象的实际线程工作。 仅在Init()成功后调用，在此完成线程具体工作。 返回值是“可运行”对象的退出代码。返回运行结束状态码。 Stop(): 当请求线程提前终止时调用此方法。 默认为空实现，可以根据需要重写。 Exit(): 在聚合线程的上下文中调用此方法以执行任何清理操作。 在聚合线程（非工作线程）上下文中执行资源释放。 默认为空实现，可以根据需要重写。 GetSingleThreadInterface(): 获取用于在禁用多线程时对“可运行”对象进行滴答处理的单线程接口指针。 当平台不支持多线程时，通过此接口实现单线程模式下的逻辑驱动。 如果未实现该接口，则当平台不支持多线程时，此“可运行”不会被滴答处理。 默认返回 nullptr，可以根据需要重写。 与标准库对比 功能 UE (FRunnable) 标准库 (std::thread) 线程创建 由 FRunnableThread::Create() 管理 直接构造 std::thread 错误处理 返回 uint32 错误码，引擎记录日志 抛出 std::system_error 异常 线程优先级 通过 EThreadPriority 设置 依赖平台 API（如 pthread_setschedparam） 跨线程通信 使用 FEvent、TQueue、FGraphEvent 需手动实现条件变量或管道 资源绑定 与 FGameThreadTask 深度集成 无内置机制 生命周期方法与线程绑定">
+<title>UE多线程</title>
+
+<link rel='canonical' href='http://localhost:1313/p/ue%E5%A4%9A%E7%BA%BF%E7%A8%8B/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="UE多线程">
+<meta property='og:description' content="简介 FRunnable &ldquo;可运行对象&quot;的接口类定义: 可运行对象指可在任意线程上被&quot;运行&quot;的对象。其调用模式遵循三步：Init() -&gt; Run() -&gt; Exit()。 执行该对象的线程严格按此顺序调用，确保线程相关资源（如TLS）在对应阶段可用。 对象的所有初始化操作应在Init()中完成。 若初始化失败，线程将中止执行并返回错误码。成功则进入Run()执行核心任务， 最后通过Exit()进行资源清理。 成员函数: Init(): 初始化“可运行”对象。 【注意】此方法在聚合此对象的线程（即创建线程）上下文中调用，而非新创建的工作线程中执行 返回值表示初始化是否成功。 Run(): 执行“可运行”对象的实际线程工作。 仅在Init()成功后调用，在此完成线程具体工作。 返回值是“可运行”对象的退出代码。返回运行结束状态码。 Stop(): 当请求线程提前终止时调用此方法。 默认为空实现，可以根据需要重写。 Exit(): 在聚合线程的上下文中调用此方法以执行任何清理操作。 在聚合线程（非工作线程）上下文中执行资源释放。 默认为空实现，可以根据需要重写。 GetSingleThreadInterface(): 获取用于在禁用多线程时对“可运行”对象进行滴答处理的单线程接口指针。 当平台不支持多线程时，通过此接口实现单线程模式下的逻辑驱动。 如果未实现该接口，则当平台不支持多线程时，此“可运行”不会被滴答处理。 默认返回 nullptr，可以根据需要重写。 与标准库对比 功能 UE (FRunnable) 标准库 (std::thread) 线程创建 由 FRunnableThread::Create() 管理 直接构造 std::thread 错误处理 返回 uint32 错误码，引擎记录日志 抛出 std::system_error 异常 线程优先级 通过 EThreadPriority 设置 依赖平台 API（如 pthread_setschedparam） 跨线程通信 使用 FEvent、TQueue、FGraphEvent 需手动实现条件变量或管道 资源绑定 与 FGameThreadTask 深度集成 无内置机制 生命周期方法与线程绑定">
+<meta property='og:url' content='http://localhost:1313/p/ue%E5%A4%9A%E7%BA%BF%E7%A8%8B/'>
+<meta property='og:site_name' content='AKaKLya'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2000-01-22T21:02:55&#43;08:00'/><meta property='article:modified_time' content='2000-01-22T21:02:55&#43;08:00'/>
+<meta name="twitter:title" content="UE多线程">
+<meta name="twitter:description" content="简介 FRunnable &ldquo;可运行对象&quot;的接口类定义: 可运行对象指可在任意线程上被&quot;运行&quot;的对象。其调用模式遵循三步：Init() -&gt; Run() -&gt; Exit()。 执行该对象的线程严格按此顺序调用，确保线程相关资源（如TLS）在对应阶段可用。 对象的所有初始化操作应在Init()中完成。 若初始化失败，线程将中止执行并返回错误码。成功则进入Run()执行核心任务， 最后通过Exit()进行资源清理。 成员函数: Init(): 初始化“可运行”对象。 【注意】此方法在聚合此对象的线程（即创建线程）上下文中调用，而非新创建的工作线程中执行 返回值表示初始化是否成功。 Run(): 执行“可运行”对象的实际线程工作。 仅在Init()成功后调用，在此完成线程具体工作。 返回值是“可运行”对象的退出代码。返回运行结束状态码。 Stop(): 当请求线程提前终止时调用此方法。 默认为空实现，可以根据需要重写。 Exit(): 在聚合线程的上下文中调用此方法以执行任何清理操作。 在聚合线程（非工作线程）上下文中执行资源释放。 默认为空实现，可以根据需要重写。 GetSingleThreadInterface(): 获取用于在禁用多线程时对“可运行”对象进行滴答处理的单线程接口指针。 当平台不支持多线程时，通过此接口实现单线程模式下的逻辑驱动。 如果未实现该接口，则当平台不支持多线程时，此“可运行”不会被滴答处理。 默认返回 nullptr，可以根据需要重写。 与标准库对比 功能 UE (FRunnable) 标准库 (std::thread) 线程创建 由 FRunnableThread::Create() 管理 直接构造 std::thread 错误处理 返回 uint32 错误码，引擎记录日志 抛出 std::system_error 异常 线程优先级 通过 EThreadPriority 设置 依赖平台 API（如 pthread_setschedparam） 跨线程通信 使用 FEvent、TQueue、FGraphEvent 需手动实现条件变量或管道 资源绑定 与 FGameThreadTask 深度集成 无内置机制 生命周期方法与线程绑定">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/d_hu15622052934649275245.jpg" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🍥</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">AKaKLya</a></h1>
+            <h2 class="site-description">点击</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#简介">简介</a>
+      <ol>
+        <li><a href="#frunnable">FRunnable</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/ue%E5%A4%9A%E7%BA%BF%E7%A8%8B/">UE多线程</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 22, 2000</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 2 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="简介">简介
+</h2><h3 id="frunnable">FRunnable
+</h3><p>&ldquo;可运行对象&quot;的接口类定义:</p>
+<ul>
+<li>可运行对象指可在任意线程上被&quot;运行&quot;的对象。其调用模式遵循三步：Init() -&gt; Run() -&gt; Exit()。</li>
+<li>执行该对象的线程严格按此顺序调用，确保线程相关资源（如TLS）在对应阶段可用。</li>
+<li>对象的所有初始化操作应在Init()中完成。</li>
+<li>若初始化失败，线程将中止执行并返回错误码。成功则进入Run()执行核心任务，</li>
+<li>最后通过Exit()进行资源清理。</li>
+</ul>
+<p>成员函数:</p>
+<ul>
+<li><strong><code>Init()</code></strong>:
+<ul>
+<li>初始化“可运行”对象。</li>
+<li>【注意】此方法在聚合此对象的线程（即创建线程）上下文中调用，而非新创建的工作线程中执行</li>
+<li>返回值表示初始化是否成功。</li>
+</ul>
+</li>
+<li><strong><code>Run()</code></strong>:
+<ul>
+<li>执行“可运行”对象的实际线程工作。</li>
+<li>仅在Init()成功后调用，在此完成线程具体工作。</li>
+<li>返回值是“可运行”对象的退出代码。返回运行结束状态码。</li>
+</ul>
+</li>
+<li><strong><code>Stop()</code></strong>:
+<ul>
+<li>当请求线程提前终止时调用此方法。</li>
+<li>默认为空实现，可以根据需要重写。</li>
+</ul>
+</li>
+<li><strong><code>Exit()</code></strong>:
+<ul>
+<li>在聚合线程的上下文中调用此方法以执行任何清理操作。</li>
+<li>在聚合线程（非工作线程）上下文中执行资源释放。</li>
+<li>默认为空实现，可以根据需要重写。</li>
+</ul>
+</li>
+<li><strong><code>GetSingleThreadInterface()</code></strong>:
+<ul>
+<li>获取用于在禁用多线程时对“可运行”对象进行滴答处理的单线程接口指针。</li>
+<li>当平台不支持多线程时，通过此接口实现单线程模式下的逻辑驱动。</li>
+<li>如果未实现该接口，则当平台不支持多线程时，此“可运行”不会被滴答处理。</li>
+<li>默认返回 <code>nullptr</code>，可以根据需要重写。</li>
+</ul>
+</li>
+</ul>
+<p>与标准库对比</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">功能</th>
+<th style="text-align:left">UE (<code>FRunnable</code>)</th>
+<th style="text-align:left">标准库 (<code>std::thread</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>线程创建</strong></td>
+<td style="text-align:left">由 <code>FRunnableThread::Create()</code> 管理</td>
+<td style="text-align:left">直接构造 <code>std::thread</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>错误处理</strong></td>
+<td style="text-align:left">返回 <code>uint32</code> 错误码，引擎记录日志</td>
+<td style="text-align:left">抛出 <code>std::system_error</code> 异常</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>线程优先级</strong></td>
+<td style="text-align:left">通过 <code>EThreadPriority</code> 设置</td>
+<td style="text-align:left">依赖平台 API（如 <code>pthread_setschedparam</code>）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>跨线程通信</strong></td>
+<td style="text-align:left">使用 <code>FEvent</code>、<code>TQueue</code>、<code>FGraphEvent</code></td>
+<td style="text-align:left">需手动实现条件变量或管道</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>资源绑定</strong></td>
+<td style="text-align:left">与 <code>FGameThreadTask</code> 深度集成</td>
+<td style="text-align:left">无内置机制</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>生命周期方法与线程绑定</strong></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">方法</th>
+<th style="text-align:left">调用线程</th>
+<th style="text-align:left">UE 内部行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Init()</strong></td>
+<td style="text-align:left"><strong>创建该任务的线程</strong></td>
+<td style="text-align:left">通常为主线程或线程池管理者，用于分配线程安全资源（如绑定到 GameThread 的委托）。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Run()</strong></td>
+<td style="text-align:left"><strong>新创建的独立线程</strong></td>
+<td style="text-align:left">线程在此执行耗时操作（如资源加载、物理计算），通过 <code>FPlatformProcess::Sleep</code> 控制频率。</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Exit()</strong></td>
+<td style="text-align:left"><strong>原始创建线程</strong></td>
+<td style="text-align:left">主线程负责清理资源，避免跨线程删除导致的崩溃。</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><code>Init()</code> 和 <code>Exit()</code> 在 <strong>同一线程</strong>（通常为 GameThread）中调用，确保 UE 的线程安全规则（如 Slate UI 操作必须在 GameThread）。</li>
+<li><code>Run()</code> 在 <strong>工作线程</strong> 中执行，禁止直接调用引擎的非线程安全 API（如修改 UObject 属性）。</li>
+</ul>
+<p><strong>停止机制与 UE 的信号系统</strong></p>
+<p>UE 的 <code>FRunnable::Stop()</code> 通常结合事件（<code>FEvent</code>）实现安全终止：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 示例：UE 风格的线程停止实现
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">class</span> <span class="nc">FMyTask</span> <span class="o">:</span> <span class="k">public</span> <span class="n">FRunnable</span> 
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">FEventRef</span> <span class="n">StopEvent</span><span class="p">;</span> <span class="c1">// 使用 UE 的 FEvent 而非 std::atomic
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="n">uint32</span> <span class="nf">Run</span><span class="p">()</span> <span class="k">override</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">while</span> <span class="p">(</span><span class="n">StopEvent</span><span class="o">-&gt;</span><span class="n">Wait</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="c1">// 非阻塞检查
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="c1">// 执行任务...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">Stop</span><span class="p">()</span> <span class="k">override</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">StopEvent</span><span class="o">-&gt;</span><span class="n">Trigger</span><span class="p">();</span> <span class="c1">// 触发事件通知线程退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>UE 特有机制</strong>：</p>
+<ul>
+<li>使用 <code>FEvent</code>（如 <code>FPlatformProcess::GetSynchEventFromPool()</code>）而非简单的原子变量，以支持跨平台等待/唤醒。</li>
+<li><code>Stop()</code> 可能由引擎的线程管理器自动调用（如任务超时或线程池关闭）。</li>
+</ul>
+<p><strong>UE 多线程编程的黄金法则</strong></p>
+<ol>
+<li><strong>资源归属规则</strong>
+<ul>
+<li>✅ 在 <code>Init()</code> 中创建 <strong>该线程独享</strong> 的资源（如 <code>FEvent</code>）。</li>
+<li>❌ 禁止在 <code>Run()</code> 中直接操作 <strong>UObject</strong> 或 <strong>Slate 控件</strong>。</li>
+</ul>
+</li>
+<li><strong>内存管理</strong>
+<ul>
+<li>使用 <code>TUniquePtr</code> 或引擎的智能指针（如 <code>TSharedPtr</code>）管理资源。</li>
+<li>若需跨线程传递数据，使用 <code>TQueue</code> 或 <code>TArray</code> + 互斥锁（<code>FCriticalSection</code>）。</li>
+</ul>
+</li>
+<li><strong>调试与统计</strong>
+<ul>
+<li>使用 <code>UE_CLOG</code> 输出线程日志.</li>
+<li>通过 <code>FThreadManager::Get().GetThreads()</code> 查看引擎线程状态。</li>
+</ul>
+</li>
+</ol>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            国窖1573 - 
+        
+        2025 AKaKLya
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.29.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0f4e44504cf40ab34cf124bb8fa71a5615b897b6d3841a1d2857b604319620c7.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

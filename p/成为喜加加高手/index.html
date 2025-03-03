@@ -270,6 +270,7 @@
         <li><a href="#继承">继承</a></li>
       </ol>
     </li>
+    <li><a href="#const">const</a></li>
     <li><a href="#转换函数">转换函数</a></li>
     <li><a href="#c11">C++11</a>
       <ol>
@@ -406,7 +407,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 49 分钟
+                    阅读时长: 50 分钟
                 </time>
             </div>
         
@@ -781,7 +782,7 @@
 <hr>
 <h3 id="array-的new--与-delete"><em><strong>Array 的new  与 delete</strong></em>
 </h3><img src="Memory_3.png" alt="image-20250113175318643" style="zoom:67%;" />
-<p>delete要看内存头尾的cookie，cookie 记录了一整块的大小，如 图中的两个21h，delete根据它们可以把内存删掉. <br/>此时 delete 和 delete[]不会造成内存泄露，<br/><strong>使用delete[] 编译器才知道要删除的是数组，数组里有3个String，调用3次析构，再回收整块内存.</strong><br/>不写delete[] 会造成内存泄露，但泄露的不是这一块内存，而是String里的指针，<br/>如图中右边的红色 ?! 块 是String里面指针指向的地方. 这里会发生内存泄露.</p>
+<p>delete要看内存头尾的cookie，cookie 记录了一整块的大小，如 图中的两个21h，delete根据它们可以把内存删掉. <br/>此时 delete 和 delete[]不会造成内存泄露，<br/><strong>使用delete[] 编译器才知道要删除的是数组，数组里有3个String，调用3次析构，再回收整块内存.</strong><br/>不写delete[] 会造成内存泄露，<br/>如图中右边的红色 ?! 块 是String里面指针指向的地方. 这里会发生内存泄露.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -1083,6 +1084,73 @@
 </span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Rectangle</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Shape</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="const">const
+</h2><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Obj</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">A</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Obj</span> <span class="n">obj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Obj</span> <span class="n">objB</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">Obj</span><span class="o">*</span> <span class="n">objptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">objptr</span><span class="o">-&gt;</span><span class="n">A</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">objptr</span><span class="o">-&gt;</span><span class="n">A</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">objptr</span><span class="o">-&gt;</span><span class="n">A</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="n">Obj</span><span class="o">*</span> <span class="n">objptr2</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//由于正在通过常量对象访问“A”，因此无法对其进行修改
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">objptr2</span><span class="o">-&gt;</span><span class="n">A</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span><span class="c1">// 错误
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">objptr2</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">objB</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">Obj</span><span class="o">*</span> <span class="k">const</span> <span class="n">objptr3</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">objptr3</span><span class="o">-&gt;</span><span class="n">A</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//“objptr3”: 不能给常量赋值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">objptr3</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">objB</span><span class="p">;</span><span class="c1">// 错误
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
@@ -7025,7 +7093,7 @@ std::is_lvalue_reference和std::is_rvalue_reference类模板：<br/>判断某个
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
-</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="n">func</span><span class="p">()</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="p">};</span>
 </span></span></code></pre></td></tr></table>
 </div>
@@ -7033,7 +7101,21 @@ std::is_lvalue_reference和std::is_rvalue_reference类模板：<br/>判断某个
 <li><code>sizeof(A)</code> 的结果是 <strong>1</strong>。</li>
 <li>原因是：C++ 标准规定，一个类的实例至少占用 1 个字节，即使它是空的（没有非静态成员变量）。<br/>这是为了确保每个实例都有唯一的地址。</li>
 </ul>
-<p><strong><code>void func()</code> 是否占用类的大小？</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="n">func</span><span class="p">()</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong><code>void func()</code> 是否占用类的大小？</strong></p>
 <ul>
 <li><strong>不占用</strong>。成员函数（包括 <code>void func()</code>）不占用类的实例的大小。</li>
 <li>成员函数是类的共享代码，存储在代码段（代码区）中，而不是每个实例中。</li>
@@ -7116,7 +7198,55 @@ std::is_lvalue_reference和std::is_rvalue_reference类模板：<br/>判断某个
 </div>
 </div><p><code>sizeof(A) = 8</code></p>
 <p><strong>虚函数表（vtable）</strong><br/>
-当一个类包含虚函数时，编译器会为该类生成一个虚函数表（vtable），<br/>并且每个对象会有一个指向这个虚函数表的指针 (通常称为虚指针或 vptr), 虚指针通常位于对象的起始位置。<br/>每个类有一个唯一的vtable，而不是每个对象都有一个vtable。<br/>这个虚指针是存储在对象中的唯一额外数据成员。</p>
+当一个类包含虚函数时，编译器会为该类生成一个虚函数表（vtable），<br/>并且每个对象会有一个指向这个虚函数表的指针 (通常称为虚指针或 vptr), 虚指针通常位于对象的起始位置。<br/><strong>每个类有一个唯一的vtable，而不是每个对象都有一个vtable。</strong><br/>这个虚指针是存储在对象中的唯一额外数据成员。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Obj</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="kt">void</span> <span class="n">Parent_MustOverrideFunc1</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">ParentFunc2</span><span class="p">()</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">A</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Obj</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="kt">void</span> <span class="n">Parent_MustOverrideFunc1</span><span class="p">()</span> <span class="k">override</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">Subfunc1</span><span class="p">()</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="/p/%E6%88%90%E4%B8%BA%E5%96%9C%E5%8A%A0%E5%8A%A0%E9%AB%98%E6%89%8B/virtualtable.png"
+	width="852"
+	height="206"
+	srcset="/p/%E6%88%90%E4%B8%BA%E5%96%9C%E5%8A%A0%E5%8A%A0%E9%AB%98%E6%89%8B/virtualtable_hu16838724208563482192.png 480w, /p/%E6%88%90%E4%B8%BA%E5%96%9C%E5%8A%A0%E5%8A%A0%E9%AB%98%E6%89%8B/virtualtable_hu12785123477215060041.png 1024w"
+	loading="lazy"
+	
+		alt="virtualtable"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="413"
+		data-flex-basis="992px"
+	
+></p>
+<p>子类没有重写虚函数，虚函数指针 指向父类的虚函数.</p>
+<p>子类重写虚函数，虚函数指针 指向子类的虚函数.</p>
 <p><strong>虚函数表调用私有函数</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
